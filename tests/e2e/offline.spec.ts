@@ -93,7 +93,7 @@ test('a mission can be lost and the review explains why', async ({ page }) => {
   }
   await expect(page.getByRole('heading', { level: 1 })).toHaveText("Flight Director's Review");
   await expect(page.getByText('What happened')).toBeVisible();
-  await expect(page.getByText(/Dashed line/)).toBeVisible();
+  await expect(page.getByText('Flight Director', { exact: true })).toBeVisible();
 });
 
 test('a mission code from the review starts the same mission for a friend', async ({ page }) => {
@@ -117,5 +117,5 @@ test('after three failures Mission Control sends help, and says so', async ({ pa
   await page.reload();
   await page.getByRole('button', { name: /Start mission/ }).click();
   await expect(page.getByText(/Mission Control sent extra supplies/)).toBeVisible();
-  await expect(page.locator('.meter').first()).toContainText('65 kWh');
+  await expect(page.locator('.gauge.power .gauge-value')).toContainText('65');
 });

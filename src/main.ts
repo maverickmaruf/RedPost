@@ -1,5 +1,8 @@
 import '@fontsource/atkinson-hyperlegible/400.css';
 import '@fontsource/atkinson-hyperlegible/700.css';
+import '@fontsource/space-grotesk/latin-500.css';
+import '@fontsource/space-grotesk/latin-600.css';
+import '@fontsource/space-grotesk/latin-700.css';
 import '@fontsource/noto-sans-bengali/bengali-400.css';
 import '@fontsource/noto-sans-bengali/bengali-700.css';
 import './ui/style.css';

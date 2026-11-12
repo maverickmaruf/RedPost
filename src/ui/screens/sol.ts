@@ -8,29 +8,49 @@ import { store } from '../../game/storage';
 import { registerScreen, type App } from '../app';
 import { h, prefersReducedMotion } from '../dom';
 import { fmt, fmtNum, getLang, t } from '../i18n';
+import { icon, type IconName } from '../icons';
 import { badge } from '../provenance';
+import { renderRelayDiagram } from '../relay';
+import { renderOutpostViewport } from '../viewport';
 
 const SYS_NAME: Record<System, string> = { heaters: 'sys.heaters', air: 'sys.air', crew: 'sys.crew', radio: 'sys.radio', greenhouse: 'sys.greenhouse' };
 
-function meter(name: string, value: string, sub: string, frac: number, danger: boolean, icon: string): HTMLElement {
-  const pct = Math.max(0, Math.min(1, frac));
-  return h('div', { class: 'meter' + (danger ? ' danger' : ''), role: 'group', 'aria-label': t('a11y.meter', { name, value: value + ', ' + sub }) },
-    h('div', { class: 'meter-top' }, h('span', { class: 'meter-icon', 'aria-hidden': 'true' }, icon), h('span', { class: 'meter-name' }, name), danger ? h('span', { class: 'meter-warn' }, '!') : null),
-    h('div', { class: 'meter-value' }, value),
-    h('div', { class: 'bar', 'aria-hidden': 'true' }, h('div', { class: 'bar-fill', style: `width:${(pct * 100).toFixed(1)}%` })),
-    h('div', { class: 'meter-sub' }, sub),
+const pct = (x: number): string => `${(Math.max(0, Math.min(1, x)) * 100).toFixed(1)}%`;
+
+function gauge(kind: 'power' | 'air' | 'food' | 'dose', ico: IconName, name: string, value: string, unit: string, sub: string, frac: number, low: boolean): HTMLElement {
+  return h('div', { class: `gauge ${kind}${low ? ' low' : ''}`, role: 'group', 'aria-label': t('a11y.meter', { name, value: `${value} ${unit}, ${sub}${low ? ', ' + t('low') : ''}` }) },
+    h('div', { class: 'gauge-top' }, icon(ico), h('span', {}, name), low ? h('span', { class: 'status-pill' }, t('low')) : null),
+    h('div', { class: 'gauge-value' }, value, h('span', { class: 'unit' }, unit)),
+    h('div', { class: 'gauge-bar', 'aria-hidden': 'true' }, h('span', { style: `width:${pct(frac)}` })),
+    h('div', { class: 'gauge-sub' }, sub),
   );
 }
 
-function seg<T extends string>(label: string, options: { value: T; text: string; sub?: string }[], current: T, onPick: (v: T) => void): HTMLElement {
+interface SegOption<T extends string> { value: T; text: string; sub?: string; ico?: IconName }
+function seg<T extends string>(label: string, options: SegOption<T>[], current: T, onPick: (v: T) => void): HTMLElement {
   const group = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': label });
   for (const o of options) {
     group.append(h('button', {
-      type: 'button', role: 'radio', class: 'seg-btn' + (o.sub ? ' tall' : ''), 'aria-checked': String(o.value === current),
+      type: 'button', role: 'radio', class: 'seg-btn', 'aria-checked': String(o.value === current),
       onclick: () => { sfx.click(); onPick(o.value); },
-    }, h('strong', {}, o.text), o.sub ? h('span', { class: 'small' }, o.sub) : null));
+    }, h('strong', {}, o.ico ? icon(o.ico) : null, o.text), o.sub ? h('span', { class: 'sub' }, o.sub) : null));
   }
   return group;
+}
+
+function cond(ico: IconName, value: string, label: string, b: HTMLElement): HTMLElement {
+  return h('div', { class: `cond ${ico}` }, icon(ico), h('div', { class: 'cond-v' }, value), h('div', { class: 'cond-k' }, label), b);
+}
+
+function sysRow(kind: string, ico: IconName, name: string, desc: string, cost: string | null, control: HTMLElement | null, effect?: string): HTMLElement {
+  return h('div', { class: 'sys' },
+    h('div', { class: 'sys-head' },
+      h('span', { class: `sys-icon ${kind}` }, icon(ico)),
+      h('div', { class: 'sys-text' }, h('h3', {}, name), desc ? h('p', {}, desc) : null),
+      cost ? h('span', { class: 'sys-cost' }, cost) : null),
+    control,
+    effect ? h('p', { class: 'sys-effect' }, effect) : null,
+  );
 }
 
 const dateFmt = (iso: string): string =>
@@ -50,63 +70,82 @@ function knownAhead(s: Session): { sol: number; f: MarsForecast }[] {
 function hint(key: string): HTMLElement | null {
   const seen = store.get<string[]>('hints', []);
   if (seen.includes(key)) return null;
-  const el = h('div', { class: 'hint', role: 'note' }, h('span', {}, t(key)),
-    h('button', { class: 'chip', type: 'button', onclick: () => { store.set('hints', [...store.get<string[]>('hints', []), key]); el.remove(); } }, t('hint.ok')));
+  const el = h('div', { class: 'hint', role: 'note' }, icon('info'), h('p', {}, t(key)),
+    h('button', { class: 'icon-btn', type: 'button', onclick: () => { store.set('hints', [...store.get<string[]>('hints', []), key]); el.remove(); } }, t('hint.ok')));
   return el;
 }
 
-function forecastPanel(s: Session): HTMLElement {
+function stormLevelIcons(level: 'minor' | 'moderate' | 'strong'): HTMLElement {
+  const n = level === 'strong' ? 3 : level === 'moderate' ? 2 : 1;
+  return h('span', { class: 'fc-level', 'aria-hidden': 'true' }, ...[0, 1, 2].map((i) => icon('radiation', i < n ? '' : 'dim')));
+}
+
+function forecastCard(s: Session): HTMLElement {
   const ahead = knownAhead(s);
   const lastHeard = [...s.reports].reverse().find((r) => r.heard.length > 0);
-  const items = ahead.length
-    ? h('ul', { class: 'fc-list' }, ...ahead.slice(0, 4).map(({ sol, f }) => {
-        const lvl = stormLevel(f);
-        return h('li', { class: `fc fc-${lvl}` },
-          h('span', { class: 'fc-icon', 'aria-hidden': 'true' }, lvl === 'strong' ? '☢☢☢' : lvl === 'moderate' ? '☢☢' : '☢'),
-          h('span', {}, t('fc.item', { level: t(`storm.${lvl}`), sol: sol === s.state.sol ? t('fc.today') : fmtNum(sol + 1) })));
-      }))
-    : h('p', { class: 'muted' }, t('fc.none'));
   const delay = lastHeard ? s.env[lastHeard.sol]!.lightTimeS : s.today.lightTimeS;
   return h('section', { class: 'card forecast', 'aria-labelledby': 'fc-h' },
-    h('h2', { id: 'fc-h' }, '📡 ', t('fc.title')),
-    items,
-    s.draft.radio ? null : h('p', { class: 'warn' }, t('fc.radiooff')),
-    h('p', { class: 'small muted' }, t('fc.delay', { min: Math.floor(delay / 60), sec: Math.round(delay % 60) })),
-    h('p', { class: 'small muted' }, badge(shippedBadge(s.window.mode)), ' ', t('fc.source')),
+    h('div', { class: 'card-head' }, icon('radio', 'radio'), h('h2', { id: 'fc-h' }, t('fc.title'))),
+    s.draft.radio ? null : h('p', { class: 'radio-off' }, icon('alert', 'sm'), t('fc.radiooff')),
+    ahead.length
+      ? h('ul', { class: 'fc-list' }, ...ahead.slice(0, 4).map(({ sol, f }) => {
+          const lvl = stormLevel(f);
+          return h('li', { class: `fc fc-${lvl}` }, stormLevelIcons(lvl),
+            h('span', { class: 'fc-text' }, t('fc.item', { level: t(`storm.${lvl}`), sol: sol === s.state.sol ? t('fc.today') : fmtNum(sol + 1) })));
+        }))
+      : h('p', { class: 'fc-empty' }, t('fc.none')),
+    renderRelayDiagram(s.today, ahead.length > 0),
+    h('div', { class: 'fc-meta' },
+      h('div', { class: 'row' }, icon('send', 'sm'), t('fc.delay', { min: Math.floor(delay / 60), sec: Math.round(delay % 60) })),
+      h('div', { class: 'row' }, badge(shippedBadge(s.window.mode)), t('fc.source')),
+    ),
   );
 }
 
-function powerPreview(s: Session, plan: Plan): HTMLElement {
+function budgetCard(s: Session, plan: Plan): { card: HTMLElement; use: number; have: number } {
   const d = demandFor(plan, s.today);
   const have = s.state.batteryKWh + s.today.generationKWh;
   let left = have;
   const cut: System[] = [];
-  let use = 0;
+  const served: System[] = [];
   for (const sys of PRIORITY) {
     if (d[sys] === 0) continue;
-    if (d[sys] <= left + 1e-9) { left -= d[sys]; use += d[sys]; } else cut.push(sys);
+    if (d[sys] <= left + 1e-9) { left -= d[sys]; served.push(sys); } else cut.push(sys);
   }
-  const over = cut.length > 0;
-  return h('div', { class: 'power-preview' + (over ? ' danger' : ''), role: 'status', 'aria-live': 'polite' },
-    h('div', { class: 'bar big', 'aria-hidden': 'true' }, h('div', { class: 'bar-fill', style: `width:${Math.min(100, ((use + cut.reduce((a, c) => a + d[c], 0)) / have) * 100).toFixed(1)}%` })),
-    h('div', {}, t('power.use', { use: fmt(use + cut.reduce((a, c) => a + d[c], 0), 0), have: fmt(have, 0) })),
-    over ? h('div', { class: 'warn' }, '⚠ ', t('power.over', { list: cut.map((c) => t(SYS_NAME[c])).join(', ') })) : null,
+  const want = PRIORITY.reduce((a, k) => a + d[k], 0);
+  const scale = Math.max(have, want);
+  const bar = h('div', { class: 'stack-bar', 'aria-hidden': 'true' },
+    ...served.map((k) => h('span', { class: k, style: `width:${pct(d[k] / scale)}` })),
+    ...cut.map((k) => h('span', { class: 'cut', style: `width:${pct(d[k] / scale)}` })),
   );
+  const over = cut.length > 0;
+  const card = h('section', { class: 'card budget' + (over ? ' over' : ''), 'aria-labelledby': 'bud-h', role: 'status', 'aria-live': 'polite' },
+    h('div', { class: 'card-head' }, icon('power'), h('h2', { id: 'bud-h' }, t('budget.title')),
+      h('span', { class: 'budget-total' }, fmt(want, 0), h('span', { class: 'faint' }, ` / ${fmt(have, 0)} kWh`))),
+    bar,
+    h('div', { class: 'legend' }, ...PRIORITY.filter((k) => d[k] > 0).map((k) =>
+      h('span', {}, h('i', { style: `background:var(--c-${k === 'heaters' ? 'heat' : k === 'greenhouse' ? 'food' : k})` }), t(SYS_NAME[k]), ' ', h('span', { class: 'faint num' }, fmt(d[k], 0))))),
+    over ? h('p', { class: 'budget-warn' }, icon('alert', 'sm'), t('power.over', { list: cut.map((c) => t(SYS_NAME[c])).join(', ') })) : null,
+    h('p', { class: 'visually-hidden' }, t('power.use', { use: fmt(want, 0), have: fmt(have, 0) })),
+  );
+  return { card, use: want, have };
 }
 
-function reportDialog(app: App, r: PlayedSol, onClose: () => void): void {
+function outcome(kind: string, ico: IconName, label: string, val: string): HTMLElement {
+  return h('li', { class: `outcome ${kind}` }, icon(ico), h('span', { class: 'label' }, label), h('span', { class: 'val' }, val));
+}
+
+function reportSheet(app: App, r: PlayedSol, onClose: () => void): void {
   const s = app.session!;
   const env: SolEnv = s.env[r.sol]!;
-  const lines: (HTMLElement | null)[] = [
-    env.storm !== 'none' ? h('p', { class: 'storm-hit' }, '☢ ', t('storm.hit'), ' (', t(`storm.${env.storm}`), ')') : null,
-    r.heard.length ? h('p', { class: 'heard' }, '📡 ', t('report.heard')) : null,
-    r.scienceGained ? h('p', {}, '🔬 ', t('report.science', { n: r.scienceGained })) : null,
-    r.scienceSentNow ? h('p', {}, '📨 ', t('report.sent', { n: r.scienceSentNow })) : null,
-    h('p', {}, '☢ ', t('report.dose', { n: fmt(r.doseBaseMSv + r.doseStormMSv, 2) })),
-    r.doseStormMSv ? h('p', { class: 'warn' }, t('report.storm', { n: fmt(r.doseStormMSv, 2) })) : null,
-    r.cut.length ? h('p', { class: 'warn' }, '⚡ ', t('report.cut', { list: r.cut.map((c) => t(SYS_NAME[c])).join(', ') })) : null,
+  const rows: (HTMLElement | null)[] = [
+    env.storm !== 'none' ? outcome('bad', 'radiation', t('storm.hit'), t(`storm.${env.storm}`)) : null,
+    r.heard.length ? outcome('info', 'radio', t('report.heard'), fmtNum(r.heard.length)) : null,
+    r.scienceGained ? outcome('good', 'science', t('out.science'), '+' + fmtNum(r.scienceGained)) : null,
+    r.scienceSentNow ? outcome('info', 'send', t('out.sent'), fmtNum(r.scienceSentNow)) : null,
+    outcome('dose', 'radiation', t('hud.dose'), `+${fmt(r.doseBaseMSv + r.doseStormMSv, 2)} mSv`),
+    r.cut.length ? outcome('bad', 'power', t('report.cut', { list: r.cut.map((c) => t(SYS_NAME[c])).join(', ') }), '') : null,
   ];
-  // Close is handled directly (not only via the 'close' event, which some embedded browsers delay or drop).
   let finished = false;
   const finish = (): void => {
     if (finished) return;
@@ -115,10 +154,14 @@ function reportDialog(app: App, r: PlayedSol, onClose: () => void): void {
     dlg.remove();
     onClose();
   };
-  const dlg = h('dialog', { class: 'report', 'aria-labelledby': 'rep-h' },
-    h('h2', { id: 'rep-h' }, t('report.title', { sol: fmtNum(r.sol + 1) })),
-    ...lines.filter(Boolean) as HTMLElement[],
-    h('button', { class: 'btn primary big', type: 'button', onclick: finish }, s.state.status === 'running' ? t('report.next') + ' ▶' : '▶'),
+  const dlg = h('dialog', { class: 'sheet report', 'aria-labelledby': 'rep-h' },
+    h('div', { class: 'sheet-grip', 'aria-hidden': 'true' }),
+    h('div', { class: 'dialog-head' },
+      h('p', { class: 'eyebrow' }, dateFmt(env.dateISO)),
+      h('h2', { id: 'rep-h' }, t('report.title', { sol: fmtNum(r.sol + 1) }))),
+    h('ul', { class: 'outcome-list' }, ...rows.filter((x): x is HTMLElement => x !== null)),
+    h('button', { class: 'btn primary lg block', type: 'button', onclick: finish },
+      s.state.status === 'running' ? t('report.next') : t('review.why'), icon('chevron', 'sm')),
   );
   dlg.addEventListener('close', finish);
   dlg.addEventListener('cancel', (e) => { e.preventDefault(); finish(); });
@@ -148,65 +191,6 @@ registerScreen('sol', (app) => {
     { source_id: 'model-card', badge: 'simulated', detail: `dust tau ${fmt(env.dustTau, 2)}` },
   ];
 
-  function render(): void {
-    const st = s!.state;
-    const plan = s!.draft;
-    const o2Days = st.o2Kg / crewO2();
-    const foodDays = st.foodKg / crewFood();
-    const dust = env.dustTau > 1.4 ? 'dust.storm' : env.dustTau > 0.6 ? 'dust.hazy' : 'dust.clear';
-    const stormKnownToday = knownAhead(s!).some((x) => x.sol === st.sol);
-    const setPlan = (p: Partial<Plan>): void => { s!.draft = { ...s!.draft, ...p }; render(); };
-
-    const parts: (Node | null)[] = [
-      h('h1', { class: 'sol-title' }, t('hud.sol', { sol: fmtNum(st.sol + 1), total: fmtNum(v('MISSION_SOLS')) }),
-        h('span', { class: 'sol-sub' }, ' · ', t(`site.${s!.site.id}`), ' · ', dateFmt(env.dateISO))),
-      h('div', { class: 'meters' },
-        meter(t('hud.power'), `${fmt(st.batteryKWh, 0)} kWh`, t('hud.of', { max: fmtNum(v('BATTERY_KWH_MAX')) }), st.batteryKWh / v('BATTERY_KWH_MAX'), st.batteryKWh < 15, '⚡'),
-        meter(t('hud.air'), `${fmt(st.o2Kg)} kg`, t('hud.days', { n: fmt(o2Days) }), st.o2Kg / v('O2_TANK_MAX_KG'), o2Days < 2, '🫁'),
-        meter(t('hud.food'), `${fmt(st.foodKg)} kg`, t('hud.days', { n: fmt(foodDays) }), st.foodKg / v('FOOD_START_KG'), foodDays < 3, '🥔'),
-        meter(t('hud.dose'), `${fmt(st.doseMSv)} mSv`, t('hud.of', { max: fmtNum(budget) }), st.doseMSv / budget, st.doseMSv > 0.8 * budget, '☢'),
-      ),
-      h('p', { class: 'sky' },
-        '☀ ', t('hud.sun', { kwh: fmt(env.generationKWh, 0) }), ' · ', t(dust), ' ', h('span', { class: 'muted small' }, t('dust.note')),
-        ' · 🌡 ', t('hud.temp', { c: fmt(env.outsideAvgC, 0) }), ' ', badge('archived')),
-      stormKnownToday ? h('p', { class: 'alert', role: 'alert' }, '☢ ', t('storm.hit')) : null,
-      st.sol === 0 && s!.setup.help ? h('p', { class: 'hint', role: 'status' }, '📦 ', t('help.banner', { kwh: fmtNum(v('HELP_BATTERY_KWH')), o2: fmtNum(v('HELP_O2_KG')), food: fmtNum(v('HELP_FOOD_KG')) })) : null,
-      st.sol === 0 ? hint('hint.power') : null,
-      forecastPanel(s!),
-      st.sol >= 1 ? hint('hint.radio') : null,
-      h('section', { class: 'card systems', 'aria-label': t('sys.crew') },
-        h('div', { class: 'sys fixed' }, h('h3', {}, '🔥 ', t('sys.heaters')), h('p', { class: 'small muted' }, t('sys.heaters.desc'), ' ', fmt(env.heaterKWh, 0), ' kWh')),
-        h('div', { class: 'sys' }, h('h3', {}, '🫁 ', t('sys.air')), h('p', { class: 'small muted' }, t('sys.air.desc', { kg: fmt(crewO2()) })),
-          seg<AirMode>(t('sys.air'), [
-            { value: 'off', text: t('opt.off'), sub: '0 kWh' },
-            { value: 'normal', text: t('opt.normal'), sub: `${fmt(crewO2() * v('O2_KWH_PER_KG'), 0)} kWh` },
-            { value: 'boost', text: t('opt.boost'), sub: `${fmt(1.5 * crewO2() * v('O2_KWH_PER_KG'), 0)} kWh` },
-          ], plan.air, (a) => setPlan({ air: a }))),
-        h('div', { class: 'sys' }, h('h3', {}, '🌱 ', t('sys.greenhouse')), h('p', { class: 'small muted' }, t('sys.greenhouse.desc', { kg: fmt(v('GREENHOUSE_KG_PER_SOL')) })),
-          seg(t('sys.greenhouse'), [
-            { value: 'off', text: t('opt.off'), sub: '0 kWh' },
-            { value: 'on', text: t('opt.on'), sub: `${fmtNum(v('GREENHOUSE_KWH'))} kWh` },
-          ], plan.greenhouse ? 'on' : 'off', (x) => setPlan({ greenhouse: x === 'on' }))),
-        h('div', { class: 'sys' }, h('h3', {}, '📡 ', t('sys.radio')), h('p', { class: 'small muted' }, t('sys.radio.desc')),
-          seg(t('sys.radio'), [
-            { value: 'off', text: t('opt.off'), sub: '0 kWh' },
-            { value: 'on', text: t('opt.on'), sub: `${fmtNum(v('RADIO_KWH'))} kWh` },
-          ], plan.radio ? 'on' : 'off', (x) => setPlan({ radio: x === 'on' }))),
-        h('div', { class: 'sys' }, h('h3', {}, '👩‍🚀 ', t('sys.crew')),
-          seg<CrewMode>(t('sys.crew'), [
-            { value: 'eva', text: t('crew.eva'), sub: t('crew.eva.desc', { n: v('EVA_SCIENCE') }) + ` · ${fmtNum(v('EVA_KWH'))} kWh` },
-            { value: 'lab', text: t('crew.lab'), sub: t('crew.lab.desc', { n: v('LAB_SCIENCE') }) + ` · ${fmtNum(v('LAB_KWH'))} kWh` },
-            { value: 'shelter', text: t('crew.shelter'), sub: t('crew.shelter.desc') + ` · ${fmtNum(v('SHELTER_KWH'))} kWh` },
-          ], plan.crew, (c) => setPlan({ crew: c }))),
-      ),
-      powerPreview(s!, plan),
-      st.sol === 0 ? hint('hint.end') : null,
-      h('button', { class: 'btn primary big endsol', type: 'button', onclick: endSol }, t('endsol'), ' ▶'),
-      h('p', { class: 'small muted center' }, '🔬 ', t('review.science', { n: fmtNum(st.scienceSent), goal: fmtNum(v('SCIENCE_GOAL')) }), st.scienceBuffered ? ` (+${fmtNum(st.scienceBuffered)})` : ''),
-    ];
-    root.replaceChildren(...parts.filter((n): n is Node => n !== null));
-  }
-
   let busy = false;
   function endSol(): void {
     if (busy) return; // ignore double taps
@@ -215,11 +199,103 @@ registerScreen('sol', (app) => {
     const r = s!.step(s!.draft);
     const done = (): void => {
       busy = false;
-      if (s!.state.status !== 'running') app.go('review');
-      else app.go('sol');
+      app.go(s!.state.status !== 'running' ? 'review' : 'sol');
     };
-    if (prefersReducedMotion()) reportDialog(app, r, done);
-    else { root.classList.add('ending'); window.setTimeout(() => reportDialog(app, r, done), 180); }
+    if (prefersReducedMotion()) reportSheet(app, r, done);
+    else { root.classList.add('ending'); window.setTimeout(() => reportSheet(app, r, done), 160); }
+  }
+
+  function render(): void {
+    const st = s!.state;
+    const plan = s!.draft;
+    const total = v('MISSION_SOLS');
+    const o2Days = st.o2Kg / crewO2();
+    const foodDays = st.foodKg / crewFood();
+    const dust = env.dustTau > 1.4 ? 'dust.storm' : env.dustTau > 0.6 ? 'dust.hazy' : 'dust.clear';
+    const stormKnownToday = knownAhead(s!).some((x) => x.sol === st.sol);
+    const setPlan = (p: Partial<Plan>): void => { s!.draft = { ...s!.draft, ...p }; render(); };
+    const airKWh = (k: number): string => `${fmt(k * crewO2() * v('O2_KWH_PER_KG'), 0)} kWh`;
+    const crewEffect = plan.crew === 'eva' ? t('crew.eva.desc', { n: v('EVA_SCIENCE') }) : plan.crew === 'lab' ? t('crew.lab.desc', { n: v('LAB_SCIENCE') }) : t('crew.shelter.desc');
+    const b = budgetCard(s!, plan);
+
+    const parts: (Node | null)[] = [
+      h('header', { class: 'mission-head' },
+        h('h1', { class: 'mission-title' },
+          h('span', { class: 'sol-num' }, t('hud.sol', { sol: fmtNum(st.sol + 1), total: fmtNum(total) })),
+          h('span', { class: 'sol-sub' }, h('span', { class: 'visually-hidden' }, ' · '), t(`site.${s!.site.id}`), ' · ', dateFmt(env.dateISO))),
+        h('div', { class: 'progress', 'aria-hidden': 'true' }, h('span', { style: `width:${pct(st.sol / total)}` })),
+      ),
+      renderOutpostViewport({
+        sol: st.sol,
+        totalSols: total,
+        env,
+        plan,
+        siteName: s!.site.id,
+        stormKnownToday,
+        onToggle: (sys) => {
+          if (sys === 'greenhouse') setPlan({ greenhouse: !plan.greenhouse });
+          else if (sys === 'radio') setPlan({ radio: !plan.radio });
+          else if (sys === 'air') {
+            const nextAir: Record<AirMode, AirMode> = { off: 'normal', normal: 'boost', boost: 'off' };
+            setPlan({ air: nextAir[plan.air] });
+          } else if (sys === 'crew') {
+            const nextCrew: Record<CrewMode, CrewMode> = { eva: 'lab', lab: 'shelter', shelter: 'eva' };
+            setPlan({ crew: nextCrew[plan.crew] });
+          }
+        },
+      }),
+      s!.setup.help && st.sol === 0 ? h('div', { class: 'hint help', role: 'status' }, icon('check'), h('p', {}, t('help.banner', { kwh: fmtNum(v('HELP_BATTERY_KWH')), o2: fmtNum(v('HELP_O2_KG')), food: fmtNum(v('HELP_FOOD_KG')) }))) : null,
+      stormKnownToday ? h('div', { class: 'alert', role: 'alert' }, icon('radiation'), h('span', {}, t('storm.hit'))) : null,
+      h('section', { class: 'gauges', 'aria-label': t('hud.sol', { sol: fmtNum(st.sol + 1), total: fmtNum(total) }) },
+        gauge('power', 'power', t('hud.power'), fmt(st.batteryKWh, 0), 'kWh', t('hud.of', { max: fmtNum(v('BATTERY_KWH_MAX')) }), st.batteryKWh / v('BATTERY_KWH_MAX'), st.batteryKWh < 15),
+        gauge('air', 'air', t('hud.air'), fmt(st.o2Kg), 'kg', t('hud.days', { n: fmt(o2Days) }), st.o2Kg / v('O2_TANK_MAX_KG'), o2Days < 2),
+        gauge('food', 'food', t('hud.food'), fmt(st.foodKg), 'kg', t('hud.days', { n: fmt(foodDays) }), st.foodKg / v('FOOD_START_KG'), foodDays < 3),
+        gauge('dose', 'radiation', t('hud.dose'), fmt(st.doseMSv), 'mSv', t('hud.of', { max: fmtNum(budget) }), st.doseMSv / budget, st.doseMSv > 0.8 * budget),
+      ),
+      h('section', { class: 'conds', 'aria-label': t('cond.sun') },
+        cond('sun', '+' + fmt(env.generationKWh, 0) + ' kWh', t('cond.sun'), badge('computed')),
+        cond('dust', t(dust), t('cond.sky'), badge('simulated')),
+        cond('temp', fmt(env.outsideAvgC, 0) + ' °C', t('cond.temp'), badge('archived')),
+      ),
+      st.sol === 0 ? hint('hint.power') : null,
+      forecastCard(s!),
+      st.sol >= 1 ? hint('hint.radio') : null,
+      h('h2', { class: 'section-title' }, t('plan.title')),
+      h('section', { class: 'card systems', 'aria-label': t('plan.title') },
+        sysRow('heat', 'heater', t('sys.heaters'), t('sys.heaters.desc'), `${fmt(env.heaterKWh, 0)} kWh`, null),
+        sysRow('air', 'air', t('sys.air'), t('sys.air.desc', { kg: fmt(crewO2()) }), null,
+          seg<AirMode>(t('sys.air'), [
+            { value: 'off', text: t('opt.off'), sub: '0 kWh' },
+            { value: 'normal', text: t('opt.normal'), sub: airKWh(1) },
+            { value: 'boost', text: t('opt.boost'), sub: airKWh(1.5) },
+          ], plan.air, (a) => setPlan({ air: a }))),
+        sysRow('food', 'food', t('sys.greenhouse'), t('sys.greenhouse.desc', { kg: fmt(v('GREENHOUSE_KG_PER_SOL')) }), null,
+          seg(t('sys.greenhouse'), [
+            { value: 'off', text: t('opt.off'), sub: '0 kWh' },
+            { value: 'on', text: t('opt.on'), sub: `${fmtNum(v('GREENHOUSE_KWH'))} kWh` },
+          ], plan.greenhouse ? 'on' : 'off', (x) => setPlan({ greenhouse: x === 'on' }))),
+        sysRow('radio', 'radio', t('sys.radio'), t('sys.radio.desc'), null,
+          seg(t('sys.radio'), [
+            { value: 'off', text: t('opt.off'), sub: '0 kWh' },
+            { value: 'on', text: t('opt.on'), sub: `${fmtNum(v('RADIO_KWH'))} kWh` },
+          ], plan.radio ? 'on' : 'off', (x) => setPlan({ radio: x === 'on' }))),
+        sysRow('crew', 'crew', t('sys.crew'), '', null,
+          seg<CrewMode>(t('sys.crew'), [
+            { value: 'eva', text: t('crew.eva'), sub: `${fmtNum(v('EVA_KWH'))} kWh`, ico: 'walk' },
+            { value: 'lab', text: t('crew.lab'), sub: `${fmtNum(v('LAB_KWH'))} kWh`, ico: 'lab' },
+            { value: 'shelter', text: t('crew.shelter'), sub: `${fmtNum(v('SHELTER_KWH'))} kWh`, ico: 'shelter' },
+          ], plan.crew, (c) => setPlan({ crew: c })), crewEffect),
+      ),
+      b.card,
+      st.sol === 0 ? hint('hint.end') : null,
+      h('div', { class: 'actionbar' },
+        h('div', { class: 'meta' },
+          h('span', { class: 'big' }, fmtNum(st.scienceSent), h('span', { class: 'faint' }, ` / ${fmtNum(v('SCIENCE_GOAL'))}`)),
+          h('span', { class: 'faint' }, t('stat.science'))),
+        h('button', { class: 'btn primary lg endsol', type: 'button', onclick: endSol }, t('endsol'), icon('chevron', 'sm')),
+      ),
+    ];
+    root.replaceChildren(...parts.filter((n): n is Node => n !== null));
   }
 
   render();

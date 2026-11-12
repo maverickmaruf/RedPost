@@ -2,6 +2,10 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
 async function audit(page: Page, label: string): Promise<void> {
+  // Audit the settled screen, not a frame of the entrance animation.
+  await page.locator('main h1').first().waitFor();
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   const serious = r.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious');
   const summary = serious.map((v) => `${label}: ${v.id} (${v.impact}) x${v.nodes.length}: ${v.nodes[0]?.target.join(' ')}`);
@@ -22,7 +26,7 @@ test('title, setup, sol, report, review and about have no serious axe violations
     await page.getByRole('dialog').waitFor();
     await audit(page, `${lang} report`);
     await page.getByRole('dialog').getByRole('button').click();
-    await page.locator('.topbar button').first().click(); // provenance drawer
+    await page.getByRole('button', { name: /^(Data|ডেটা)$/ }).click(); // provenance drawer
     await audit(page, `${lang} provenance`);
     await page.getByRole('dialog').getByRole('button').last().click();
     for (let i = 0; i < 25 && (await page.locator('.endsol').isVisible().catch(() => false)); i++) {

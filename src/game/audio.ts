@@ -59,6 +59,12 @@ function noise(dur: number, gain = 0.05): void {
 
 export const sfx = {
   click: (): void => tone(660, 0.06, 'triangle', 0.05),
+  toggle: (): void => { tone(780, 0.04, 'sine', 0.04); tone(1175, 0.04, 'triangle', 0.03, 0.03); },
+  vent: (): void => { noise(0.22, 0.025); tone(440, 0.12, 'sine', 0.02); },
+  relay: (): void => { tone(988, 0.05, 'triangle', 0.04); tone(1480, 0.08, 'sine', 0.04, 0.04); },
+  radar: (): void => { tone(1760, 0.07, 'sine', 0.05); tone(2200, 0.05, 'sine', 0.03, 0.03); },
+  shield: (): void => { tone(196, 0.2, 'triangle', 0.07); tone(130, 0.28, 'sine', 0.07, 0.06); },
+  step: (): void => { noise(0.08, 0.02); tone(320, 0.04, 'sine', 0.02); },
   endSol: (): void => { tone(392, 0.12, 'sine', 0.07); tone(523, 0.18, 'sine', 0.07, 0.1); },
   radio: (): void => { noise(0.35, 0.04); tone(880, 0.08, 'square', 0.03, 0.3); tone(1175, 0.08, 'square', 0.03, 0.42); },
   alarm: (): void => { for (let i = 0; i < 3; i++) tone(740, 0.14, 'sawtooth', 0.05, i * 0.22); },

@@ -31,17 +31,18 @@ export function openProvenance(items: ProvItem[]): void {
     if (!s) continue;
     list.append(h('li', {},
       h('div', { class: 'prov-head' }, badge(it.badge), h('strong', {}, s.title)),
-      h('div', { class: 'muted' }, s.publisher),
+      h('div', { class: 'small muted' }, s.publisher),
       s.dataset_id || s.report_id ? h('div', { class: 'mono' }, s.dataset_id ?? s.report_id) : null,
       it.detail ? h('div', { class: 'mono' }, it.detail) : null,
-      h('div', { class: 'mono wrap' }, it.url ?? s.url),
-      h('div', { class: 'muted' }, it.badge === 'computed' ? t('prov.computed') : t('prov.retrieved', { date: (it.retrieved ?? s.retrieved).slice(0, 10) })),
+      h('div', { class: 'mono wrap faint' }, it.url ?? s.url),
+      h('div', { class: 'small faint' }, it.badge === 'computed' ? t('prov.computed') : t('prov.retrieved', { date: (it.retrieved ?? s.retrieved).slice(0, 10) })),
     ));
   }
-  dialog = h('dialog', { class: 'drawer', 'aria-labelledby': 'prov-title' },
-    h('h2', { id: 'prov-title' }, t('prov.title')),
+  dialog = h('dialog', { class: 'drawer sheet', 'aria-labelledby': 'prov-title' },
+    h('div', { class: 'sheet-grip', 'aria-hidden': 'true' }),
+    h('div', { class: 'dialog-head' }, h('p', { class: 'eyebrow' }, t('data.button')), h('h2', { id: 'prov-title' }, t('prov.title'))),
     list,
-    h('button', { class: 'btn', type: 'button', onclick: () => { dialog?.close(); dialog?.remove(); } }, t('close')),
+    h('button', { class: 'btn block', type: 'button', onclick: () => { dialog?.close(); dialog?.remove(); } }, t('close')),
   );
   dialog.addEventListener('close', () => dialog?.remove());
   document.body.append(dialog);
