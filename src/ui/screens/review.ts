@@ -2,7 +2,8 @@ import { MISSION_DOSE_BUDGET_MSV, v } from '../../compute/constants';
 import { stars, type OutpostState } from '../../compute/outpost';
 import { shippedBadge } from '../../data/load';
 import { sfx } from '../../game/audio';
-import { Session } from '../../game/session';
+import { encodeMission } from '../../game/codes';
+import { helpFor, Session } from '../../game/session';
 import { registerScreen } from '../app';
 import { h } from '../dom';
 import { fmtNum, getLang, t } from '../i18n';
@@ -57,7 +58,7 @@ registerScreen('review', (app) => {
     { source_id: 'model-card', badge: 'simulated' as const },
   ];
 
-  const retry = (): void => { sfx.click(); app.session = new Session(app.data, s.setup); app.go('sol'); };
+  const retry = (): void => { sfx.click(); app.session = new Session(app.data, { ...s.setup, help: helpFor(s.setup) }); app.go('sol'); };
 
   return h('main', { class: 'screen review' },
     h('h1', {}, won ? '🏁 ' + t('review.won') : t('review.failed')),
@@ -81,6 +82,7 @@ registerScreen('review', (app) => {
       h('p', {}, badge(shippedBadge(s.window.mode)), ' ', t('review.storms', { n: fmtNum(s.window.marsForecasts.length), month })),
       h('ul', { class: 'mono small storm-ids' }, ...s.window.marsForecasts.slice(0, 8).map((f) => h('li', {}, `${f.simulationID} → Mars ${f.arrival.slice(0, 16).replace('T', ' ')} UTC`))),
     ),
+    h('section', { class: 'card' }, h('h2', {}, t('code.title')), h('p', { class: 'code-big' }, encodeMission(app.data, s.setup)), h('p', { class: 'small muted' }, t('code.share'))),
     h('div', { class: 'stack' },
       h('button', { class: 'btn primary big', type: 'button', onclick: retry }, '↻ ', t('review.retry')),
       h('button', { class: 'btn', type: 'button', onclick: () => app.go('setup') }, t('review.new')),

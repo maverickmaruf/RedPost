@@ -95,3 +95,27 @@ test('a mission can be lost and the review explains why', async ({ page }) => {
   await expect(page.getByText('What happened')).toBeVisible();
   await expect(page.getByText(/Dashed line/)).toBeVisible();
 });
+
+test('a mission code from the review starts the same mission for a friend', async ({ page }) => {
+  await page.goto('/?judge=1');
+  for (let i = 0; i < 25 && (await page.locator('.endsol').isVisible().catch(() => false)); i++) await endSols(page, 1);
+  const code = (await page.locator('.code-big').textContent())!.trim();
+  expect(code).toMatch(/^[0-9A-Z]{3}-[0-9A-Z]{4}$/);
+  await page.goto('/');
+  await page.getByLabel(/mission code/).fill(code.toLowerCase());
+  await page.getByRole('button', { name: 'Go' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Sol 1 of 30 · Jezero Crater · 1 May 2024');
+  await page.goto('/');
+  await page.getByLabel(/mission code/).fill('ZZZ-ZZZZ');
+  await page.getByRole('button', { name: 'Go' }).click();
+  await expect(page.getByText(/doesn't work/)).toBeVisible();
+});
+
+test('after three failures Mission Control sends help, and says so', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('redoutpost.v1.fails', JSON.stringify({ 'jezero|2025-06': 3 })));
+  await page.reload();
+  await page.getByRole('button', { name: /Start mission/ }).click();
+  await expect(page.getByText(/Mission Control sent extra supplies/)).toBeVisible();
+  await expect(page.locator('.meter').first()).toContainText('65 kWh');
+});

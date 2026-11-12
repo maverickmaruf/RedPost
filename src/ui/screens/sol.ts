@@ -170,6 +170,7 @@ registerScreen('sol', (app) => {
         '☀ ', t('hud.sun', { kwh: fmt(env.generationKWh, 0) }), ' · ', t(dust), ' ', h('span', { class: 'muted small' }, t('dust.note')),
         ' · 🌡 ', t('hud.temp', { c: fmt(env.outsideAvgC, 0) }), ' ', badge('archived')),
       stormKnownToday ? h('p', { class: 'alert', role: 'alert' }, '☢ ', t('storm.hit')) : null,
+      st.sol === 0 && s!.setup.help ? h('p', { class: 'hint', role: 'status' }, '📦 ', t('help.banner', { kwh: fmtNum(v('HELP_BATTERY_KWH')), o2: fmtNum(v('HELP_O2_KG')), food: fmtNum(v('HELP_FOOD_KG')) })) : null,
       st.sol === 0 ? hint('hint.power') : null,
       forecastPanel(s!),
       st.sol >= 1 ? hint('hint.radio') : null,

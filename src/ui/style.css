@@ -76,6 +76,12 @@ button { font: inherit; color: inherit; }
 .logo { border: none; background: none; padding: 0; cursor: pointer; min-height: 44px; }
 .planet { display: inline-block; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffb07a, #c4512f 45%, #5e1f12 100%); box-shadow: 0 0 40px #c4512f66; }
 
+/* Mission codes */
+.code-form { text-align: left; display: grid; gap: 6px; margin-top: 4px; }
+.code-row { display: flex; gap: 8px; }
+.code-input { flex: 1; min-width: 0; min-height: 48px; font: inherit; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; background: var(--panel); color: var(--ink); border: 2px solid var(--line); border-radius: var(--radius); padding: 8px 12px; }
+.code-big { font-family: ui-monospace, Consolas, monospace; font-size: 1.8rem; letter-spacing: 4px; font-weight: 700; margin: 4px 0; }
+
 /* HUD */
 .sol-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
 .sol-sub { font-size: 0.95rem; font-weight: 400; color: var(--muted); }
@@ -163,4 +169,9 @@ table.model td.num { white-space: nowrap; font-family: ui-monospace, Consolas, m
   h1 { font-size: 1.35rem; }
   .meter-value { font-size: 1.15rem; }
   .seg-btn { padding: 6px 4px; font-size: 0.9rem; }
+}
+@media (max-width: 520px) {
+  table.model tr { display: block; border-bottom: 1px solid var(--line); padding: 6px 0; }
+  table.model td { display: block; border: 0; padding: 1px 4px; }
+  table.model td.num { font-weight: 700; }
 }

@@ -55,9 +55,13 @@ export interface SolReport {
 export const crewO2 = (): number => v('CREW') * v('O2_PER_CREW_KG_DAY');
 export const crewFood = (): number => v('CREW') * v('FOOD_PER_CREW_KG_DAY');
 
-export function initialState(): OutpostState {
+/** help = 1 after three failed tries: Mission Control sends extra supplies (adaptive difficulty, shown to the player). */
+export function initialState(help: 0 | 1 = 0): OutpostState {
   return {
-    sol: 0, batteryKWh: v('BATTERY_KWH_START'), o2Kg: v('O2_TANK_START_KG'), foodKg: v('FOOD_START_KG'),
+    sol: 0,
+    batteryKWh: Math.min(v('BATTERY_KWH_MAX'), v('BATTERY_KWH_START') + help * v('HELP_BATTERY_KWH')),
+    o2Kg: Math.min(v('O2_TANK_MAX_KG'), v('O2_TANK_START_KG') + help * v('HELP_O2_KG')),
+    foodKg: v('FOOD_START_KG') + help * v('HELP_FOOD_KG'),
     doseMSv: 0, scienceBuffered: 0, scienceSent: 0, known: [], queued: [], status: 'running', failure: null,
   };
 }

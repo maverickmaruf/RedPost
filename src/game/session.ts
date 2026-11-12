@@ -12,6 +12,8 @@ export interface Setup {
   landing: { r: number; c: number };
   windowId: string;
   seed: number;
+  /** Adaptive help level: 1 after three failed tries at this site and month. */
+  help?: 0 | 1;
 }
 
 export function siteGrid(site: SiteData): Grid {
@@ -21,6 +23,19 @@ export function siteGrid(site: SiteData): Grid {
 
 export function landingCheck(site: SiteData, r: number, c: number) {
   return checkLanding(siteGrid(site), r, c, v('SLOPE_LIMIT_DEG'));
+}
+
+/** Nearest safe landing pixel to the map centre, spiralling outwards. */
+export function defaultLanding(site: SiteData): { r: number; c: number } {
+  const g = siteGrid(site);
+  const r0 = Math.floor(g.rows / 2), c0 = Math.floor(g.cols / 2);
+  for (let d = 0; d < g.rows / 2; d++) {
+    for (let dr = -d; dr <= d; dr++) for (let dc = -d; dc <= d; dc++) {
+      if (Math.max(Math.abs(dr), Math.abs(dc)) !== d) continue;
+      if (landingCheck(site, r0 + dr, c0 + dc).ok) return { r: r0 + dr, c: c0 + dc };
+    }
+  }
+  return { r: r0, c: c0 };
 }
 
 export function envFor(data: GameData, setup: Setup): SolEnv[] {
@@ -40,12 +55,13 @@ export const DEFAULT_PLAN: Plan = { air: 'normal', greenhouse: true, radio: true
 export class Session {
   readonly env: SolEnv[];
   readonly reports: PlayedSol[] = [];
-  state: OutpostState = initialState();
+  state: OutpostState;
   draft: Plan = { ...DEFAULT_PLAN };
   private ghostCache: RunResult | null = null;
 
   constructor(readonly data: GameData, readonly setup: Setup, plans: Plan[] = []) {
     this.env = envFor(data, setup);
+    this.state = initialState(setup.help ?? 0);
     for (const p of plans) {
       if (this.state.status !== 'running') break;
       this.step(p, false);
@@ -71,13 +87,16 @@ export class Session {
     this.reports.push(r);
     this.state = r.after;
     if (save) this.save();
-    if (this.state.status !== 'running') recordResult(this.setup, stars(this.state));
+    if (this.state.status !== 'running') {
+      recordResult(this.setup, stars(this.state));
+      recordAttempt(this.setup, this.state.status === 'won');
+    }
     return r;
   }
 
   /** The Flight Director's run on the same environment: the ghost in the review. */
   ghost(): RunResult {
-    this.ghostCache ??= runMission(this.env, flightDirectorPlan);
+    this.ghostCache ??= runMission(this.env, flightDirectorPlan, this.setup.help ?? 0);
     return this.ghostCache;
   }
 
@@ -121,4 +140,15 @@ export function totalStars(): number {
   return Object.values(store.get<Best>('best', {})).reduce((a: number, b) => a + b, 0);
 }
 export const rankIndex = (stars: number): 0 | 1 | 2 | 3 => (stars >= 9 ? 3 : stars >= 6 ? 2 : stars >= 3 ? 1 : 0);
+// --- Adaptive difficulty: consecutive failures per site+month. ---
+type Fails = Record<string, number>;
+const keyOf = (s: Pick<Setup, 'siteId' | 'windowId'>): string => `${s.siteId}|${s.windowId}`;
+export function recordAttempt(setup: Setup, won: boolean): void {
+  const f = store.get<Fails>('fails', {});
+  f[keyOf(setup)] = won ? 0 : (f[keyOf(setup)] ?? 0) + 1;
+  store.set('fails', f);
+}
+/** Help kicks in from the 4th try after three failures in a row at the same site and month. */
+export const helpFor = (s: Pick<Setup, 'siteId' | 'windowId'>): 0 | 1 => ((store.get<Fails>('fails', {})[keyOf(s)] ?? 0) >= 3 ? 1 : 0);
+
 export const bestFor = (siteId: string, windowId: string): Stars => store.get<Best>('best', {})[`${siteId}|${windowId}`] ?? 0;

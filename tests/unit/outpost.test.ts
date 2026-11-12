@@ -130,3 +130,17 @@ describe('whole missions', () => {
     expect(stars(r.final)).toBeLessThanOrEqual(1);
   });
 });
+
+describe('adaptive help', () => {
+  it('adds the stated supplies and nothing else', () => {
+    const a = initialState(0), b = initialState(1);
+    expect(b.batteryKWh - a.batteryKWh).toBe(v('HELP_BATTERY_KWH'));
+    expect(b.o2Kg - a.o2Kg).toBe(v('HELP_O2_KG'));
+    expect(b.foodKg - a.foodKg).toBe(v('HELP_FOOD_KG'));
+    expect({ ...b, batteryKWh: 0, o2Kg: 0, foodKg: 0 }).toEqual({ ...a, batteryKWh: 0, o2Kg: 0, foodKg: 0 });
+  });
+  it('never overfills the battery or tank', () => {
+    expect(initialState(1).batteryKWh).toBeLessThanOrEqual(v('BATTERY_KWH_MAX'));
+    expect(initialState(1).o2Kg).toBeLessThanOrEqual(v('O2_TANK_MAX_KG'));
+  });
+});

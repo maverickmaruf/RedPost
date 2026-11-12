@@ -67,6 +67,9 @@ export const K = {
   STORM_MODERATE_MSV: c(1.5, 'mSv', 'simplified', 'model-card', 'Extra dose from a direct CME slower than 1000 km/s'),
   STORM_STRONG_MSV: c(4.0, 'mSv', 'simplified', 'model-card', 'Extra dose from a direct CME at 1000 km/s or faster (half the May 2024 record)'),
   STRONG_CME_KM_S: c(1000, 'km/s', 'simplified', 'model-card', 'Speed above which a direct CME counts as strong'),
+  HELP_BATTERY_KWH: c(15, 'kWh', 'simplified', 'model-card', 'Extra battery charge Mission Control sends after 3 failed tries'),
+  HELP_O2_KG: c(6, 'kg', 'simplified', 'model-card', 'Extra oxygen Mission Control sends after 3 failed tries'),
+  HELP_FOOD_KG: c(10, 'kg', 'simplified', 'model-card', 'Extra food Mission Control sends after 3 failed tries'),
   SLOPE_LIMIT_DEG: c(15, 'deg', 'simplified', 'model-card', 'Steepest ground the lander may touch down on (measured over 463 m pixels)'),
 } as const;
 

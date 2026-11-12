@@ -49,8 +49,8 @@ export interface RunResult {
 }
 
 /** Play a whole mission with a policy. Used for the ghost and for balance tests. */
-export function runMission(env: readonly SolEnv[], policy: (s: OutpostState, env: readonly SolEnv[]) => Plan): RunResult {
-  let s = initialState();
+export function runMission(env: readonly SolEnv[], policy: (s: OutpostState, env: readonly SolEnv[]) => Plan, help: 0 | 1 = 0): RunResult {
+  let s = initialState(help);
   const reports: SolReport[] = [];
   while (s.status === 'running' && s.sol < env.length) {
     const r = stepSol(s, policy(s, env), env[s.sol] as SolEnv);

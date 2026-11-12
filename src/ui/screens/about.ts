@@ -13,7 +13,7 @@ registerScreen('about', (app) => {
   app.provenance = () => Object.keys(SOURCES).filter((k) => k !== 'model-card').map((k) => ({ source_id: k, badge: 'cache' as const }));
   const rows = Object.entries(K).map(([key, c]) =>
     h('tr', {},
-      h('td', {}, c.note),
+      h('td', {}, t(`const.${key}`)),
       h('td', { class: 'num' }, fmtNum(c.value), ' ', c.unit),
       h('td', {}, c.kind === 'cited' ? badge('cache') : badge('simulated'), ' ', h('span', { class: 'muted small' }, c.kind === 'cited' ? (SOURCES[c.source_id]?.publisher ?? c.source_id) : t('about.simplified'))),
       h('td', { class: 'visually-hidden' }, key),

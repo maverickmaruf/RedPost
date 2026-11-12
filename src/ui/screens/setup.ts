@@ -3,7 +3,7 @@ import { slopeDeg } from '../../compute/terrain';
 import type { SiteData } from '../../data/load';
 import { shippedBadge } from '../../data/load';
 import { sfx } from '../../game/audio';
-import { bestFor, envFor, landingCheck, Session, siteGrid, type Setup } from '../../game/session';
+import { bestFor, defaultLanding, envFor, helpFor, landingCheck, Session, siteGrid, type Setup } from '../../game/session';
 import { registerScreen } from '../app';
 import { h } from '../dom';
 import { fmt, fmtNum, getLang, t } from '../i18n';
@@ -42,19 +42,6 @@ function drawSlopeMap(canvas: HTMLCanvasElement, site: SiteData, mark: { r: numb
     ctx.moveTo(mark.c + 0.5, mark.r - 6); ctx.lineTo(mark.c + 0.5, mark.r + 7);
     ctx.stroke();
   }
-}
-
-/** Nearest safe pixel to the map centre, spiralling outwards. */
-function defaultLanding(site: SiteData): { r: number; c: number } {
-  const g = siteGrid(site);
-  const r0 = Math.floor(g.rows / 2), c0 = Math.floor(g.cols / 2);
-  for (let d = 0; d < g.rows / 2; d++) {
-    for (let dr = -d; dr <= d; dr++) for (let dc = -d; dc <= d; dc++) {
-      if (Math.max(Math.abs(dr), Math.abs(dc)) !== d) continue;
-      if (landingCheck(site, r0 + dr, c0 + dc).ok) return { r: r0 + dr, c: c0 + dc };
-    }
-  }
-  return { r: r0, c: c0 };
 }
 
 const monthName = (iso: string): string =>
@@ -131,8 +118,8 @@ registerScreen('setup', (app) => {
   landBtn.addEventListener('click', () => {
     if (!landingCheck(site(), landing.r, landing.c).ok) return;
     sfx.endSol();
-    const setup: Setup = { siteId, landing, windowId, seed: (landing.r * 131 + landing.c * 7 + windowId.length) >>> 0 };
-    app.session = new Session(data, setup);
+    const setup: Setup = { siteId, landing, windowId, seed: ((landing.r * 131 + landing.c * 7 + windowId.length) >>> 0) & 4095 };
+    app.session = new Session(data, { ...setup, help: helpFor(setup) });
     app.go('sol');
   });
 
