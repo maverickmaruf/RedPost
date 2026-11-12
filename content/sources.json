@@ -1,0 +1,126 @@
+{
+  "_note": "Every fact and every dataset in the game resolves to an id here. verified = fetched and checked by the build team on the date shown.",
+  "sources": {
+    "spaceapps-2026-statement": {
+      "title": "Build a Junior Astronaut Mission Trainer (2026 challenge statement)",
+      "publisher": "NASA Space Apps Challenge",
+      "url": "https://www.spaceappschallenge.org/2026/challenges/junior-astronaut-mission-trainer/",
+      "retrieved": "2026-11-12", "license": "Public challenge text", "status": "VERIFIED"
+    },
+    "donki-enlil": {
+      "title": "DONKI WSA-ENLIL Simulations (CME arrival forecasts, incl. Mars)",
+      "publisher": "NASA CCMC via api.nasa.gov",
+      "url": "https://api.nasa.gov/DONKI/WSAEnlilSimulations",
+      "dataset_id": "DONKI WSAEnlilSimulations",
+      "retrieved": "2026-11-12", "license": "US Government work, public domain", "status": "VERIFIED"
+    },
+    "donki-sep": {
+      "title": "DONKI Solar Energetic Particle (SEP) events",
+      "publisher": "NASA CCMC via api.nasa.gov",
+      "url": "https://api.nasa.gov/DONKI/SEP",
+      "dataset_id": "DONKI SEP",
+      "retrieved": "2026-11-12", "license": "US Government work, public domain", "status": "VERIFIED"
+    },
+    "insight-weather": {
+      "title": "InSight: Mars Weather Service API (archived sols 675-681, Oct 2020)",
+      "publisher": "NASA JPL via api.nasa.gov",
+      "url": "https://api.nasa.gov/insight_weather/",
+      "retrieved": "2026-11-12", "license": "US Government work, public domain", "status": "VERIFIED"
+    },
+    "mola-megdr": {
+      "title": "MGS MOLA Mission Experiment Gridded Data Record (MEGDR), 128 pixels/degree",
+      "publisher": "NASA Planetary Data System, Geosciences Node",
+      "url": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg128/",
+      "dataset_id": "MGS-M-MOLA-5-MEGDR-L3-V1.0",
+      "retrieved": "2026-11-12", "license": "NASA PDS, public domain", "status": "VERIFIED"
+    },
+    "trek-bookmarks": {
+      "title": "Mars Trek landing-site bookmarks (Perseverance, Curiosity, Spirit)",
+      "publisher": "NASA Solar System Treks (JPL)",
+      "url": "https://trek.nasa.gov/mars/",
+      "retrieved": "2026-11-12", "license": "NASA public portal", "status": "VERIFIED"
+    },
+    "osdr-osd-2": {
+      "title": "OSD-2: Response of human lymphoblastoid cells to HZE (iron ions) or gamma-rays",
+      "publisher": "NASA Open Science Data Repository",
+      "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-2",
+      "dataset_id": "OSD-2",
+      "retrieved": "2026-11-12", "license": "NASA OSDR open data", "status": "VERIFIED"
+    },
+    "nssdc-mars-fact": {
+      "title": "Mars Fact Sheet",
+      "publisher": "NASA Goddard, NSSDCA (last updated 19 May 2025)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "nssdc-earth-fact": {
+      "title": "Earth Fact Sheet",
+      "publisher": "NASA Goddard, NSSDCA (last updated 15 Nov 2024)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "jpl-approx-pos": {
+      "title": "Approximate Positions of the Planets (Table 1, 1800-2050)",
+      "publisher": "NASA JPL Solar System Dynamics",
+      "url": "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "jpl-astro-par": {
+      "title": "Astrodynamic Parameters (speed of light, astronomical unit)",
+      "publisher": "NASA JPL Solar System Dynamics",
+      "url": "https://ssd.jpl.nasa.gov/astro_par.html",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "giss-mars24": {
+      "title": "Mars24 Sunclock: Algorithm and Worked Examples",
+      "publisher": "NASA Goddard Institute for Space Studies",
+      "url": "https://www.giss.nasa.gov/tools/mars24/help/algorithm.html",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "bvad-2022": {
+      "title": "Life Support Baseline Values and Assumptions Document (Table: crew metabolic loads)",
+      "publisher": "NASA, NTRS 20210024855 (Feb 2022)",
+      "url": "https://ntrs.nasa.gov/citations/20210024855",
+      "report_id": "NTRS 20210024855",
+      "retrieved": "2026-11-12", "license": "NASA technical publication, public", "status": "VERIFIED"
+    },
+    "nasa-moxie-2023": {
+      "title": "NASA's Oxygen-Generating Experiment MOXIE Completes Mars Mission",
+      "publisher": "NASA / JPL news release 2023-127 (6 Sep 2023)",
+      "url": "https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "nasa-rad-2013": {
+      "title": "NASA Rover Results Include First Age Measurement on Mars and Help for Human Exploration",
+      "publisher": "NASA news release (Curiosity RAD, Hassler et al.)",
+      "url": "https://www.nasa.gov/news-release/nasa-rover-results-include-first-age-measurement-on-mars-and-help-for-human-exploration/",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "ntrs-rad-hassler-2014": {
+      "title": "Mars' Surface Radiation Environment Measured with the Mars Science Laboratory's Curiosity Rover (Science 343, 2014)",
+      "publisher": "NTRS 20180007641",
+      "url": "https://ntrs.nasa.gov/citations/20180007641",
+      "report_id": "NTRS 20180007641",
+      "retrieved": "2026-11-12", "license": "Reprint record", "status": "VERIFIED"
+    },
+    "nasa-may2024-storm": {
+      "title": "NASA Watches Mars Light Up During Epic Solar Storm",
+      "publisher": "NASA (June 2024)",
+      "url": "https://www.nasa.gov/solar-system/planets/mars/nasa-watches-mars-light-up-during-epic-solar-storm/",
+      "retrieved": "2026-11-12", "license": "US Government work", "status": "VERIFIED"
+    },
+    "ntrs-career-limit": {
+      "title": "Biological Space Radiation Countermeasures to Enable Long Duration Exploration Missions (abstract states the 600 mSv career limit)",
+      "publisher": "NTRS 20230005246",
+      "url": "https://ntrs.nasa.gov/citations/20230005246",
+      "report_id": "NTRS 20230005246",
+      "retrieved": "2026-11-12", "license": "NASA technical report, public", "status": "VERIFIED"
+    },
+    "model-card": {
+      "title": "Red Outpost simplified teaching model (this project)",
+      "publisher": "Red Outpost team",
+      "url": "docs/MODEL.md",
+      "retrieved": "2026-11-12", "license": "Apache-2.0", "status": "SIMPLIFIED"
+    }
+  }
+}

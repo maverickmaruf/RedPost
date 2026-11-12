@@ -1,0 +1,36 @@
+{
+  "name": "red-outpost",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Red Outpost: a Mars outpost survival trainer for kids 7-12, driven by real NASA data (NASA Space Apps 2026: Build a Junior Astronaut Mission Trainer).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "verify:claims": "node scripts/verify-claims.mjs",
+    "acquire": "node scripts/acquire/index.mjs",
+    "acquire:offline": "node scripts/acquire/index.mjs --offline",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.8",
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "@fontsource/atkinson-hyperlegible": "5.3.0",
+    "@fontsource/noto-sans-bengali": "5.3.0"
+  }
+}

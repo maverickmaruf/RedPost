@@ -1,0 +1,1 @@
+{"url":"https://api.nasa.gov/insight_weather/?api_key=REDACTED&feedtype=json&ver=1.0","retrieved":"2026-11-12T17:07:08Z","http_status":200,"mode":"live","note":"seeded from Phase 0 probe response (same URL, DEMO_KEY)"}

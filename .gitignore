@@ -1,0 +1,16 @@
+node_modules/
+dist/
+cache/
+test-results/
+playwright-report/
+*.log
+.env
+.DS_Store
+node_modules
+
+# Local reference material (not ours to publish; keep out of the public repo)
+Space Apps Challenge Participants Guide.pdf
+space-apps-2026-build-guide.html
+opus_build_prompt_junior_astronaut_trainer.md
+.claude/
+dev-dist/

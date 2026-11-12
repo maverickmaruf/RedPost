@@ -1,0 +1,6 @@
+{
+  "url": "https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=2024-05-01&endDate=2024-06-01&api_key=REDACTED",
+  "retrieved": "2026-11-12T17:18:13.429Z",
+  "http_status": 200,
+  "mode": "live"
+}

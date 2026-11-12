@@ -1,0 +1,6 @@
+{
+  "url": "https://trek.nasa.gov/mars/TrekServices/ws/index/eq/searchItems?start=0&rows=5&proj=urn:ogc:def:crs:EPSG::104905&key=Gusev",
+  "retrieved": "2026-11-12T17:19:26.185Z",
+  "http_status": 200,
+  "mode": "live"
+}
