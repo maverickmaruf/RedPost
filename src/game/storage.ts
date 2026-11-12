@@ -4,7 +4,9 @@ const memory = new Map<string, string>();
 let available = true;
 
 function probe(): boolean {
+  // Even reading `localStorage` can throw (blocked site data, some private modes), so everything is inside try.
   try {
+    if (typeof localStorage === 'undefined') return false;
     const k = PREFIX + '__probe';
     localStorage.setItem(k, '1');
     localStorage.removeItem(k);
@@ -13,7 +15,7 @@ function probe(): boolean {
     return false;
   }
 }
-available = typeof localStorage !== 'undefined' && probe();
+available = probe();
 
 export const store = {
   available: (): boolean => available,

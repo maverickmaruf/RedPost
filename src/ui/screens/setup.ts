@@ -6,7 +6,7 @@ import { sfx } from '../../game/audio';
 import { bestFor, envFor, landingCheck, Session, siteGrid, type Setup } from '../../game/session';
 import { registerScreen } from '../app';
 import { h } from '../dom';
-import { fmt, fmtNum, t } from '../i18n';
+import { fmt, fmtNum, getLang, t } from '../i18n';
 import { badge } from '../provenance';
 
 function drawSlopeMap(canvas: HTMLCanvasElement, site: SiteData, mark: { r: number; c: number } | null): void {
@@ -57,6 +57,9 @@ function defaultLanding(site: SiteData): { r: number; c: number } {
   return { r: r0, c: c0 };
 }
 
+const monthName = (iso: string): string =>
+  new Intl.DateTimeFormat(getLang() === 'bn' ? 'bn-BD' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.parse(iso));
+
 registerScreen('setup', (app) => {
   const data = app.data;
   let siteId: SiteData['id'] = 'jezero';
@@ -99,7 +102,7 @@ registerScreen('setup', (app) => {
     monthRow.append(h('button', {
       type: 'button', role: 'radio', 'data-id': w.id, class: 'seg-btn tall',
       onclick: () => { sfx.click(); windowId = w.id; refresh(); },
-    }, h('strong', {}, w.label), h('span', { class: 'small' }, t('site.storms', { n: w.marsForecasts.length }), stars ? ' · ' + '★'.repeat(stars) : '')));
+    }, h('strong', {}, monthName(w.start)), h('span', { class: 'small' }, t('site.storms', { n: w.marsForecasts.length }), stars ? ' · ' + '★'.repeat(stars) : '')));
   }
 
   canvas.addEventListener('click', (e) => {

@@ -1,0 +1,12 @@
+Red Outpost: Mars Survival Trainer
+Copyright 2026 the Red Outpost team (NASA Space Apps Challenge 2026)
+
+This product includes software developed by the Red Outpost team, licensed under the Apache License, Version 2.0.
+
+Third-party material:
+- NASA data (DONKI, InSight, MOLA MEGDR, Mars Trek, OSDR, NSSDCA fact sheets, JPL SSD tables, GISS Mars24,
+  NTRS reports, NASA news releases): US Government works, generally public domain. NASA does not endorse this project.
+- Atkinson Hyperlegible font (Braille Institute), SIL Open Font License 1.1, via Fontsource.
+- Noto Sans Bengali font (Google), SIL Open Font License 1.1, via Fontsource.
+- Workbox / vite-plugin-pwa (MIT), Vite (MIT) at build time.
+No images, audio files or other media from third parties are included. Sounds are synthesised in code.
