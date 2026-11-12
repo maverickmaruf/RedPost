@@ -218,32 +218,68 @@ registerScreen('sol', (app) => {
     const crewEffect = plan.crew === 'eva' ? t('crew.eva.desc', { n: v('EVA_SCIENCE') }) : plan.crew === 'lab' ? t('crew.lab.desc', { n: v('LAB_SCIENCE') }) : t('crew.shelter.desc');
     const b = budgetCard(s!, plan);
 
-    const parts: (Node | null)[] = [
-      h('header', { class: 'mission-head' },
-        h('h1', { class: 'mission-title' },
-          h('span', { class: 'sol-num' }, t('hud.sol', { sol: fmtNum(st.sol + 1), total: fmtNum(total) })),
-          h('span', { class: 'sol-sub' }, h('span', { class: 'visually-hidden' }, ' · '), t(`site.${s!.site.id}`), ' · ', dateFmt(env.dateISO))),
-        h('div', { class: 'progress', 'aria-hidden': 'true' }, h('span', { style: `width:${pct(st.sol / total)}` })),
+    function openShortcuts(): void {
+      sfx.click();
+      const dlg = h('dialog', { class: 'sheet feature-modal shortcuts-modal', 'aria-labelledby': 'sc-title' },
+        h('div', { class: 'sheet-grip', 'aria-hidden': 'true' }),
+        h('div', { class: 'dialog-head' },
+          h('div', { class: 'card-head' }, icon('radio', 'lg'), h('h2', { id: 'sc-title' }, t('shortcuts.title'))),
+        ),
+        h('p', { class: 'prose', style: 'margin: 6px 0 16px; color: var(--text-2);' }, t('shortcuts.desc')),
+        h('ul', { class: 'shortcuts-list' },
+          h('li', {}, h('kbd', {}, 'Space'), h('span', {}, t('shortcuts.space'))),
+          h('li', {}, h('kbd', {}, '1'), h('span', {}, t('shortcuts.sys1'))),
+          h('li', {}, h('kbd', {}, '2'), h('span', {}, t('shortcuts.sys2'))),
+          h('li', {}, h('kbd', {}, '3'), h('span', {}, t('shortcuts.sys3'))),
+          h('li', {}, h('kbd', {}, '4'), h('span', {}, t('shortcuts.sys4'))),
+          h('li', {}, h('kbd', {}, '?'), h('span', {}, t('shortcuts.help'))),
+        ),
+        h('button', { class: 'btn primary block', style: 'margin-top: 20px;', type: 'button', onclick: () => { sfx.click(); dlg.close(); dlg.remove(); } }, t('close')),
+      );
+      dlg.addEventListener('click', (e) => { if (e.target === dlg) { dlg.close(); dlg.remove(); } });
+      dlg.addEventListener('cancel', () => dlg.remove());
+      document.body.append(dlg);
+      dlg.showModal();
+    }
+
+    const missionHead = h('header', { class: 'mission-head' },
+      h('h1', { class: 'mission-title' },
+        h('span', { class: 'sol-num' }, t('hud.sol', { sol: fmtNum(st.sol + 1), total: fmtNum(total) })),
+        h('span', { class: 'sol-sub' }, h('span', { class: 'visually-hidden' }, ' · '), t(`site.${s!.site.id}`), ' · ', dateFmt(env.dateISO))),
+      h('div', { class: 'progress', 'aria-hidden': 'true' }, h('span', { style: `width:${pct(st.sol / total)}` })),
+    );
+
+    const viewport = renderOutpostViewport({
+      sol: st.sol,
+      totalSols: total,
+      env,
+      plan,
+      siteName: s!.site.id,
+      stormKnownToday,
+      onToggle: (sys) => {
+        if (sys === 'greenhouse') setPlan({ greenhouse: !plan.greenhouse });
+        else if (sys === 'radio') setPlan({ radio: !plan.radio });
+        else if (sys === 'air') {
+          const nextAir: Record<AirMode, AirMode> = { off: 'normal', normal: 'boost', boost: 'off' };
+          setPlan({ air: nextAir[plan.air] });
+        } else if (sys === 'crew') {
+          const nextCrew: Record<CrewMode, CrewMode> = { eva: 'lab', lab: 'shelter', shelter: 'eva' };
+          setPlan({ crew: nextCrew[plan.crew] });
+        }
+      },
+    });
+
+    const leftCol = h('div', { class: 'sol-col-left' },
+      viewport,
+      h('section', { class: 'conds', 'aria-label': t('cond.sun') },
+        cond('sun', '+' + fmt(env.generationKWh, 0) + ' kWh', t('cond.sun'), badge('computed')),
+        cond('dust', t(dust), t('cond.sky'), badge('simulated')),
+        cond('temp', fmt(env.outsideAvgC, 0) + ' °C', t('cond.temp'), badge('archived')),
       ),
-      renderOutpostViewport({
-        sol: st.sol,
-        totalSols: total,
-        env,
-        plan,
-        siteName: s!.site.id,
-        stormKnownToday,
-        onToggle: (sys) => {
-          if (sys === 'greenhouse') setPlan({ greenhouse: !plan.greenhouse });
-          else if (sys === 'radio') setPlan({ radio: !plan.radio });
-          else if (sys === 'air') {
-            const nextAir: Record<AirMode, AirMode> = { off: 'normal', normal: 'boost', boost: 'off' };
-            setPlan({ air: nextAir[plan.air] });
-          } else if (sys === 'crew') {
-            const nextCrew: Record<CrewMode, CrewMode> = { eva: 'lab', lab: 'shelter', shelter: 'eva' };
-            setPlan({ crew: nextCrew[plan.crew] });
-          }
-        },
-      }),
+      forecastCard(s!),
+    );
+
+    const rightCol = h('div', { class: 'sol-col-right' },
       s!.setup.help && st.sol === 0 ? h('div', { class: 'hint help', role: 'status' }, icon('check'), h('p', {}, t('help.banner', { kwh: fmtNum(v('HELP_BATTERY_KWH')), o2: fmtNum(v('HELP_O2_KG')), food: fmtNum(v('HELP_FOOD_KG')) }))) : null,
       stormKnownToday ? h('div', { class: 'alert', role: 'alert' }, icon('radiation'), h('span', {}, t('storm.hit'))) : null,
       h('section', { class: 'gauges', 'aria-label': t('hud.sol', { sol: fmtNum(st.sol + 1), total: fmtNum(total) }) },
@@ -252,13 +288,7 @@ registerScreen('sol', (app) => {
         gauge('food', 'food', t('hud.food'), fmt(st.foodKg), 'kg', t('hud.days', { n: fmt(foodDays) }), st.foodKg / v('FOOD_START_KG'), foodDays < 3),
         gauge('dose', 'radiation', t('hud.dose'), fmt(st.doseMSv), 'mSv', t('hud.of', { max: fmtNum(budget) }), st.doseMSv / budget, st.doseMSv > 0.8 * budget),
       ),
-      h('section', { class: 'conds', 'aria-label': t('cond.sun') },
-        cond('sun', '+' + fmt(env.generationKWh, 0) + ' kWh', t('cond.sun'), badge('computed')),
-        cond('dust', t(dust), t('cond.sky'), badge('simulated')),
-        cond('temp', fmt(env.outsideAvgC, 0) + ' °C', t('cond.temp'), badge('archived')),
-      ),
       st.sol === 0 ? hint('hint.power') : null,
-      forecastCard(s!),
       st.sol >= 1 ? hint('hint.radio') : null,
       h('h2', { class: 'section-title' }, t('plan.title')),
       h('section', { class: 'card systems', 'aria-label': t('plan.title') },
@@ -294,9 +324,63 @@ registerScreen('sol', (app) => {
           h('span', { class: 'faint' }, t('stat.science'))),
         h('button', { class: 'btn primary lg endsol', type: 'button', onclick: endSol }, t('endsol'), icon('chevron', 'sm')),
       ),
-    ];
-    root.replaceChildren(...parts.filter((n): n is Node => n !== null));
+      h('button', { class: 'shortcuts-hint', type: 'button', onclick: openShortcuts },
+        icon('info', 'sm'),
+        h('span', {}, t('shortcuts.hint')),
+      ),
+    );
+
+    const solGrid = h('div', { class: 'sol-grid' }, leftCol, rightCol);
+    root.replaceChildren(missionHead, solGrid);
   }
+
+  // Keyboard shortcut controller
+  const onKeyDown = (e: KeyboardEvent): void => {
+    // Ignore when typing in input or when dialog is open
+    if (e.target instanceof HTMLInputElement || document.querySelector('dialog[open]')) return;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      endSol();
+    } else if (e.key === '1') {
+      e.preventDefault();
+      const plan = s!.draft;
+      const nextAir: Record<AirMode, AirMode> = { off: 'normal', normal: 'boost', boost: 'off' };
+      s!.draft = { ...plan, air: nextAir[plan.air] };
+      sfx.vent();
+      render();
+    } else if (e.key === '2') {
+      e.preventDefault();
+      s!.draft = { ...s!.draft, greenhouse: !s!.draft.greenhouse };
+      sfx.toggle();
+      render();
+    } else if (e.key === '3') {
+      e.preventDefault();
+      s!.draft = { ...s!.draft, radio: !s!.draft.radio };
+      sfx.relay();
+      render();
+    } else if (e.key === '4') {
+      e.preventDefault();
+      const plan = s!.draft;
+      const nextCrew: Record<CrewMode, CrewMode> = { eva: 'lab', lab: 'shelter', shelter: 'eva' };
+      s!.draft = { ...plan, crew: nextCrew[plan.crew] };
+      sfx.step();
+      render();
+    } else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+      e.preventDefault();
+      const btn = root.querySelector<HTMLButtonElement>('.shortcuts-hint');
+      if (btn) btn.click();
+    }
+  };
+
+  window.addEventListener('keydown', onKeyDown);
+  // Clean up listener when screen changes
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(root)) {
+      window.removeEventListener('keydown', onKeyDown);
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 
   render();
   return root;

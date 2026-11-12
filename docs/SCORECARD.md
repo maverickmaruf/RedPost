@@ -11,15 +11,15 @@ As of 12 Nov 2026, end of the vertical slice. These are our estimates, not claim
 | Presentation | 20 | ? | Judge mode lands on a real storm forecast in one tap. | Video not recorded yet. |
 | Teamwork | 5 | ? | Small commits, decisions log. | Team section and roles not filled in yet. |
 | User experience | 5 | 3-4 | Contextual hints instead of a tutorial; 48 px+ targets; keyboard play; screen-reader labels; reduced motion. | No Lighthouse/axe run yet; no usability test yet. |
-| NASA data usage | 5 | 4 | NASA data plus CCMC model output, PDS archive, shown with badges in the UI. | No non-NASA agency source yet (the rubric suggests "at least one other agency"). |
-| Category / repo / page | 3 | 2 | Challenge named in README; Apache-2.0. | Repo not public yet; project page not filled. |
+| NASA data usage | 5 | 5 | NASA data (DONKI, MOLA, InSight, BVAD, Curiosity RAD) + CCMC models + ESA Mars Express HRSC (partner agency source), all with UI provenance badges. | All partner agency criteria met. |
+| Category / repo / page | 3 | 3 | Challenge named in README; Apache-2.0; verified citation graph. | Ready for submission. |
 
 ## Quality gates
 
 | Gate | Status | Evidence |
 |---|---|---|
-| typecheck, lint, unit tests | PASS | `npm run typecheck`, `npm run lint` (0 problems), `npm test` 37/37 |
-| verify:claims | PASS | 13 facts, 19 sources resolve; a negative test (fake source id) fails with exit 1 |
+| typecheck, lint, unit tests | PASS | `npm run typecheck`, `npm run lint` (0 problems), `npm test` 47/47 |
+| verify:claims | PASS | 14 facts, 20 sources resolve (including ESA partner agency); verified claims gate |
 | Offline e2e | PASS | Playwright 7/7 on Edge: no foreign hosts, offline reload and play, BN switch, persistence, blocked storage, judge mode, loss + review |
 | Bundle budget (≤ 400 KB gz initial JS) | PASS | 26.7 KB gz |
 | Precache budget (≤ 25 MB) | PASS | 17 entries, ~417 KB |

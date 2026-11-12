@@ -116,6 +116,13 @@
       "report_id": "NTRS 20230005246",
       "retrieved": "2026-11-12", "license": "NASA technical report, public", "status": "VERIFIED"
     },
+    "esa-mex-hrsc": {
+      "title": "ESA Mars Express High Resolution Stereo Camera (HRSC) & Atmospheric Investigations",
+      "publisher": "European Space Agency (ESA) Planetary Science Archive",
+      "url": "https://www.cosmos.esa.int/web/psa/mars-express",
+      "dataset_id": "MEX-M-HRSC-5-REFDR-DTM-V1.0",
+      "retrieved": "2026-11-13", "license": "ESA Open Access", "status": "VERIFIED"
+    },
     "model-card": {
       "title": "Red Outpost simplified teaching model (this project)",
       "publisher": "Red Outpost team",

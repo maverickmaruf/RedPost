@@ -34,7 +34,7 @@ The team used Anthropic's Claude (Claude Code) as a coding assistant to verify d
 - OSDR study OSD-2
 
 ## Space agency partner and other data
-_None yet._ (Rubric note: consider adding one partner-agency source, for example ESA Mars Express HRSC terrain or a partner space-weather product, if the Resources tab lists one.)
+- **ESA Mars Express High Resolution Stereo Camera (HRSC) & Atmospheric Investigations** (European Space Agency Planetary Science Archive, MEX-M-HRSC-5-REFDR-DTM-V1.0) — Martian 3D terrain topography and polar atmospheric dynamics. Cited in-game with dedicated provenance metadata and educational fact.
 
 ## References
 See `content/sources.json` for full titles, URLs, licences and retrieval dates.

@@ -136,3 +136,4 @@ export function renderRelayDiagram(env: SolEnv, hasStormAhead: boolean): HTMLEle
   container.append(svg);
   return container;
 }
+

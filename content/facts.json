@@ -39,6 +39,9 @@
       "bn": "NASA-র ইনসাইট ল্যান্ডার মাইনাস ৯০ ডিগ্রি সেলসিয়াসের চেয়েও ঠান্ডা রাত মেপেছে। হিটার এমন জিনিস যা তোমার ঘাঁটিতে কখনো বন্ধ করা যায় না।" },
     { "id": "osdr-radiation", "source_id": "osdr-osd-2", "needs_native_review": true,
       "en": "Scientists study how space radiation affects living cells. NASA's open science study OSD-2 tested human cells with heavy iron ions, like the cosmic rays that reach Mars.",
-      "bn": "বিজ্ঞানীরা দেখেন মহাকাশের বিকিরণ জীবন্ত কোষে কী প্রভাব ফেলে। NASA-র উন্মুক্ত গবেষণা OSD-2 মানুষের কোষে ভারী লোহার আয়ন দিয়ে পরীক্ষা করেছে, মঙ্গলে পৌঁছানো মহাজাগতিক রশ্মির মতো।" }
+      "bn": "বিজ্ঞানীরা দেখেন মহাকাশের বিকিরণ জীবন্ত কোষে কী প্রভাব ফেলে। NASA-র উন্মুক্ত গবেষণা OSD-2 মানুষের কোষে ভারী লোহার আয়ন দিয়ে পরীক্ষা করেছে, মঙ্গলে পৌঁছানো মহাজাগতিক রশ্মির মতো।" },
+    { "id": "esa-mars-express", "source_id": "esa-mex-hrsc", "needs_native_review": true,
+      "en": "Europe's Mars Express spacecraft has mapped Mars in high-resolution 3D since 2003 with its HRSC camera, discovering subsurface water-ice deposits and tracking atmospheric ozone layers.",
+      "bn": "ইউরোপের মার্স এক্সপ্রেস মহাকাশযান ২০০৩ সাল থেকে HRSC ক্যামেরা দিয়ে মঙ্গলের হাই-রেজোলিউশন থ্রিডি মানচিত্র তৈরি করেছে এবং মাটির নিচে জমা বরফ আবিষ্কার করেছে।" }
   ]
 }

@@ -3,11 +3,55 @@ import { store } from './storage';
 
 let ctx: AudioContext | null = null;
 let enabled = store.get('sound', true);
+let ambientNode: AudioBufferSourceNode | null = null;
 
 export const soundEnabled = (): boolean => enabled;
 export function setSound(on: boolean): void {
   enabled = on;
   store.set('sound', on);
+  if (!on) stopAmbientWind();
+  else startAmbientWind();
+}
+
+export function startAmbientWind(): void {
+  if (!enabled) return;
+  const a = ac();
+  if (!a || ambientNode) return;
+  try {
+    const dur = 4;
+    const buf = a.createBuffer(1, Math.floor(a.sampleRate * dur), a.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < d.length; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02; // brownian motion for deep planetary wind
+      d[i] = last * 3.5;
+    }
+    const src = a.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const filter = a.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 240;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.018, a.currentTime);
+    src.connect(filter).connect(g).connect(a.destination);
+    src.start();
+    ambientNode = src;
+  } catch {
+    // Web Audio blocked or not ready
+  }
+}
+
+export function stopAmbientWind(): void {
+  if (ambientNode) {
+    try {
+      ambientNode.stop();
+    } catch {
+      // ignore stop errors
+    }
+    ambientNode = null;
+  }
 }
 
 function ac(): AudioContext | null {
@@ -58,8 +102,8 @@ function noise(dur: number, gain = 0.05): void {
 }
 
 export const sfx = {
-  click: (): void => tone(660, 0.06, 'triangle', 0.05),
-  toggle: (): void => { tone(780, 0.04, 'sine', 0.04); tone(1175, 0.04, 'triangle', 0.03, 0.03); },
+  click: (): void => { startAmbientWind(); tone(660, 0.06, 'triangle', 0.05); },
+  toggle: (): void => { startAmbientWind(); tone(780, 0.04, 'sine', 0.04); tone(1175, 0.04, 'triangle', 0.03, 0.03); },
   vent: (): void => { noise(0.22, 0.025); tone(440, 0.12, 'sine', 0.02); },
   relay: (): void => { tone(988, 0.05, 'triangle', 0.04); tone(1480, 0.08, 'sine', 0.04, 0.04); },
   radar: (): void => { tone(1760, 0.07, 'sine', 0.05); tone(2200, 0.05, 'sine', 0.03, 0.03); },
