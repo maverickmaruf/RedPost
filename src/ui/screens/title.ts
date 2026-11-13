@@ -22,8 +22,8 @@ const todayISO = (): string => {
 };
 
 export function quickStart(app: App): void {
-  // Gentlest real month at the safest site: June 2025 at Jezero.
-  const win = app.data.space.windows.find((w) => w.id === '2025-06') ?? app.data.space.windows[0];
+  // Launch into the future expedition window: October 2026 at Jezero Crater.
+  const win = app.data.space.windows.find((w) => w.id === '2026-10') ?? app.data.space.windows.find((w) => w.id === '2025-06') ?? app.data.space.windows[0];
   start(app, { siteId: 'jezero', landing: { r: 48, c: 48 }, windowId: win!.id, seed: 7 });
 }
 

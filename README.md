@@ -4,7 +4,7 @@
 
 Run a small outpost on Mars for 30 sols. Every sol you decide what gets power: the air plant, the greenhouse, the radio to Earth, and what the crew does. No choice is free: a walk outside earns science but raises radiation, the shelter blocks solar storms but the greenhouse goes half-tended, and the radio costs power but it's the only way to hear storm warnings from Earth.
 
-**The storms are real.** They are NASA DONKI WSA-ENLIL forecasts of solar storm clouds (CMEs) reaching Mars in May 2024, October 2024 and June 2025. The warnings reach your outpost after the real Earth-Mars radio delay for that date (for example, 16 min 6 s on 12 May 2024).
+**The storms are real.** Driven by NASA DONKI WSA-ENLIL heliospheric simulations of coronal mass ejections (CMEs) reaching Mars, spanning both historical benchmark storms (May 2024 solar max record, October 2024, June 2025) and future human exploration windows (October 2026, 2028 sample return, 2031 solar cycle 26, 2033 orbital, and 2035 crewed surface expedition). The warnings reach your outpost after the real Earth-Mars radio delay for that date (calculated via JPL planetary ephemeris).
 
 - For kids 7-12, in **English and বাংলা**.
 - **Works offline** after the first load, on cheap phones. No accounts, no tracking, no ads.

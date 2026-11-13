@@ -247,7 +247,7 @@
   "highlights.title": "Flight Operations Systems",
   "highlights.insight": "InSight Weather Data",
   "highlights.donki": "DONKI CME Forecasts",
-  "highlights.moxie": "MOXIE O₂ & Microgrid",
+  "highlights.moxie": "MOXIE O2 & Microgrid",
   "highlights.relay": "Deep Space Delay Map",
   "modal.insight.title": "NASA InSight Weather Telemetry",
   "modal.insight.desc": "Real Martian weather recorded by the InSight lander at Elysium Planitia. Measures diurnal surface temperatures down to -95°C, atmospheric pressure, and dust optical depth (τ) that directly dictates solar array power output.",

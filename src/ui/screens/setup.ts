@@ -148,11 +148,20 @@ registerScreen('setup', (app) => {
   }
   for (const w of data.space.windows) {
     const stars = bestFor(siteId, w.id);
+    const yr = new Date(w.start).getFullYear();
+    const isFuture = yr >= 2026;
     monthRow.append(h('button', {
       type: 'button', role: 'radio', 'data-id': w.id, class: 'option',
       onclick: () => { sfx.click(); windowId = w.id; refresh(); },
-    }, h('strong', {}, monthName(w.start)), h('span', { class: 'small' }, t('site.storms', { n: fmtNum(w.marsForecasts.length) })),
-      stars ? h('span', { class: 'stars', 'aria-label': t('review.stars', { n: stars }) }, '★'.repeat(stars)) : null));
+    },
+      h('strong', {},
+        monthName(w.start),
+        isFuture ? h('span', { class: 'badge badge-live', style: 'font-size: 0.62rem; padding: 2px 6px; margin-left: auto;' }, 'FUTURE') : null,
+      ),
+      h('span', { class: 'small' }, w.label),
+      h('span', { class: 'small muted', style: 'font-size: 0.74rem;' }, t('site.storms', { n: fmtNum(w.marsForecasts.length) })),
+      stars ? h('span', { class: 'stars', 'aria-label': t('review.stars', { n: stars }) }, '★'.repeat(stars)) : null,
+    ));
   }
 
   const pick = (clientX: number, clientY: number): void => {
