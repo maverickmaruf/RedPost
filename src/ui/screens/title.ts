@@ -6,6 +6,7 @@ import { h } from '../dom';
 import { fmtNum, t } from '../i18n';
 import { heroArt, icon, type IconName } from '../icons';
 import { renderRelayDiagram } from '../relay';
+import { openBriefing } from '../briefing';
 
 let logoTaps = 0;
 let logoTimer = 0;
@@ -153,8 +154,9 @@ registerScreen('title', (app) => {
     h('nav', { class: 'menu', 'aria-label': t('app.title') },
       saved ? menuItem('play', t('title.quick'), () => quickStart(app)) : null,
       menuItem('pin', t('title.choose'), () => app.go('setup')),
+      menuItem('info', t('title.briefing'), () => openBriefing(() => quickStart(app))),
       menuItem('calendar', t('title.daily'), () => start(app, dailyMission(app.data, todayISO()))),
-      menuItem('info', t('title.about'), () => app.go('about')),
+      menuItem('science', t('title.about'), () => app.go('about')),
     ),
     codeCard(app),
     h('div', { class: 'rank-line' }, h('span', { class: 'chip' }, icon('rank', 'sm'), t('title.rank', { rank: t(`rank.${rankIndex(stars)}`), stars: fmtNum(stars) }))),

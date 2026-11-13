@@ -1,14 +1,25 @@
 # Red Outpost: Mars Survival Trainer
 
-**NASA Space Apps Challenge 2026 · Challenge: [Build a Junior Astronaut Mission Trainer](https://www.spaceappschallenge.org/2026/challenges/junior-astronaut-mission-trainer/)** (Education & gamification, Intermediate / Beginner-Youth)
+**NASA Space Apps Challenge 2026 · Challenge: [Junior Astronaut Mission Trainer](https://www.spaceappschallenge.org/2026/challenges/junior-astronaut-mission-trainer/)**  
+*(Living Beyond Earth · Education & Simulation · Intermediate / Beginner-Youth)*
 
-Run a small outpost on Mars for 30 sols. Every sol you decide what gets power: the air plant, the greenhouse, the radio to Earth, and what the crew does. No choice is free: a walk outside earns science but raises radiation, the shelter blocks solar storms but the greenhouse goes half-tended, and the radio costs power but it's the only way to hear storm warnings from Earth.
+> *"A living simulation where every choice costs something... putting someone in the commander's seat and making them own their consequences."*  
+> — **Mike Givens**, Challenge Author (NASA / Kakhi International)
 
-**The storms are real.** Driven by NASA DONKI WSA-ENLIL heliospheric simulations of coronal mass ejections (CMEs) reaching Mars, spanning both historical benchmark storms (May 2024 solar max record, October 2024, June 2025) and future human exploration windows (October 2026, 2028 sample return, 2031 solar cycle 26, 2033 orbital, and 2035 crewed surface expedition). The warnings reach your outpost after the real Earth-Mars radio delay for that date (calculated via JPL planetary ephemeris).
+Run a small outpost on Mars for 30 sols. Every sol you decide what gets power: the MOXIE air plant, the hydroponic greenhouse, the deep-space radio link to Earth, and crew duties (EVA walk, lab analysis, or radiation bunker). No choice is free:
+- **EVA walks** earn vital science for Earth, but consume battery and expose astronauts to ionizing radiation.
+- **Storm shelters** attenuate CME solar radiation by 75%, but the hydroponic greenhouse goes half-tended.
+- **The deep-space radio** consumes precious kilowatts, but it is the *only* way to receive NASA DONKI solar storm warnings and beam science back home.
+- **Speed-of-light delay** ($3\text{--}22\text{ min}$) means Earth can never bail you out in real time: you must command autonomously!
+
+**The storms are real.** Driven by NASA DONKI WSA-ENLIL heliospheric simulations of coronal mass ejections (CMEs) reaching Mars, spanning both historical benchmark storms (May 2024 solar max record, October 2024, June 2025) and future human exploration windows (October 2026 Space Apps precursor, 2028 sample return, 2031 solar cycle 26, 2033 orbital, and 2035 crewed surface expedition).
 
 - For kids 7-12, in **English and বাংলা**.
-- **Works offline** after the first load, on cheap phones. No accounts, no tracking, no ads.
-- Every number is computed by tested code (`src/compute/`) or quoted from a cited NASA source; tap **ⓘ Data** on any screen.
+- **Works offline** after the first load, on cheap phones. Zero trackers, zero ads, child-safe.
+- **Living Outpost Viewport**: Dynamic SVG diorama reacting to space weather, dust storms, and subsystem toggles.
+- **Commander's Critical Decision Gates**: High-tension decision prompts when risking EVA during solar storms or facing life-support blackouts.
+- **Printable Personalized Certificate**: Official framed NASA Space Apps Mission Certificate with customizable Cadet Commander name.
+- Every number is computed by tested code (`src/compute/`) or quoted from a cited NASA/ESA source; tap **ⓘ Data** on any screen.
 
 ## Play
 

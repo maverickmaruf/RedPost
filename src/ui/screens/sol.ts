@@ -12,6 +12,7 @@ import { icon, type IconName } from '../icons';
 import { badge } from '../provenance';
 import { renderRelayDiagram } from '../relay';
 import { renderOutpostViewport } from '../viewport';
+import { openBriefing } from '../briefing';
 
 const SYS_NAME: Record<System, string> = { heaters: 'sys.heaters', air: 'sys.air', crew: 'sys.crew', radio: 'sys.radio', greenhouse: 'sys.greenhouse' };
 
@@ -135,6 +136,17 @@ function outcome(kind: string, ico: IconName, label: string, val: string): HTMLE
   return h('li', { class: `outcome ${kind}` }, icon(ico), h('span', { class: 'label' }, label), h('span', { class: 'val' }, val));
 }
 
+function commanderLogText(r: PlayedSol, env: SolEnv): string {
+  if (env.storm !== 'none' && r.plan.crew === 'eva') return t('log.storm.eva');
+  if (env.storm !== 'none' && r.plan.crew === 'shelter') return t('log.storm.shelter');
+  if (env.storm !== 'none') return t('log.storm.hab');
+  if (r.cut.includes('heaters') || r.cut.includes('air')) return t('log.power.critical');
+  if (r.heard.length > 0) return t('log.radio.packet', { n: fmtNum(r.heard.length) });
+  if (r.plan.crew === 'eva') return t('log.eva.success', { sci: fmtNum(r.scienceGained) });
+  if (r.scienceSentNow > 0) return t('log.science.sent', { sci: fmtNum(r.scienceSentNow) });
+  return t('log.routine');
+}
+
 function reportSheet(app: App, r: PlayedSol, onClose: () => void): void {
   const s = app.session!;
   const env: SolEnv = s.env[r.sol]!;
@@ -154,11 +166,16 @@ function reportSheet(app: App, r: PlayedSol, onClose: () => void): void {
     dlg.remove();
     onClose();
   };
+  const logBox = h('div', { class: 'report-log-callout' },
+    h('div', { class: 'report-log-head' }, icon('info', 'sm'), h('strong', {}, t('report.log.title'))),
+    h('p', { class: 'report-log-text' }, commanderLogText(r, env)),
+  );
   const dlg = h('dialog', { class: 'sheet report', 'aria-labelledby': 'rep-h' },
     h('div', { class: 'sheet-grip', 'aria-hidden': 'true' }),
     h('div', { class: 'dialog-head' },
       h('p', { class: 'eyebrow' }, dateFmt(env.dateISO)),
       h('h2', { id: 'rep-h' }, t('report.title', { sol: fmtNum(r.sol + 1) }))),
+    logBox,
     h('ul', { class: 'outcome-list' }, ...rows.filter((x): x is HTMLElement => x !== null)),
     h('button', { class: 'btn primary lg block', type: 'button', onclick: finish },
       s.state.status === 'running' ? t('report.next') : t('review.why'), icon('chevron', 'sm')),
@@ -192,8 +209,8 @@ registerScreen('sol', (app) => {
   ];
 
   let busy = false;
-  function endSol(): void {
-    if (busy) return; // ignore double taps
+  function proceedEndSol(): void {
+    if (busy) return;
     busy = true;
     sfx.endSol();
     const r = s!.step(s!.draft);
@@ -203,6 +220,80 @@ registerScreen('sol', (app) => {
     };
     if (prefersReducedMotion()) reportSheet(app, r, done);
     else { root.classList.add('ending'); window.setTimeout(() => reportSheet(app, r, done), 160); }
+  }
+
+  function confirmDecision(opts: {
+    title: string;
+    desc: string;
+    iconName: IconName;
+    primaryText: string;
+    secondaryText: string;
+    onPrimary: () => void;
+    onSecondary: () => void;
+  }): void {
+    sfx.alarm();
+    const dlg = h('dialog', { class: 'sheet feature-modal decision-modal', 'aria-labelledby': 'dec-title' },
+      h('div', { class: 'sheet-grip', 'aria-hidden': 'true' }),
+      h('div', { class: 'dialog-head' },
+        h('div', { class: 'card-head' }, icon(opts.iconName, 'lg'), h('h2', { id: 'dec-title' }, opts.title)),
+      ),
+      h('p', { class: 'prose', style: 'margin: 12px 0 20px; line-height: 1.6; color: var(--text-2);' }, opts.desc),
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn primary lg block', type: 'button', onclick: () => { dlg.close(); dlg.remove(); opts.onPrimary(); } }, opts.primaryText),
+        h('button', { class: 'btn block', type: 'button', onclick: () => { dlg.close(); dlg.remove(); opts.onSecondary(); } }, opts.secondaryText),
+      ),
+    );
+    dlg.addEventListener('cancel', () => dlg.remove());
+    document.body.append(dlg);
+    dlg.showModal();
+  }
+
+  function endSol(): void {
+    if (busy) return;
+    const plan = s!.draft;
+    const stormKnownToday = knownAhead(s!).some((x) => x.sol === s!.state.sol);
+
+    // 1. Solar Storm Warning: Crew is assigned to walk outside on EVA during an active CME
+    if (stormKnownToday && plan.crew === 'eva') {
+      confirmDecision({
+        title: t('decision.title'),
+        desc: t('decision.storm.eva'),
+        iconName: 'radiation',
+        primaryText: t('decision.shelter'),
+        secondaryText: t('decision.eva'),
+        onPrimary: () => {
+          s!.draft = { ...s!.draft, crew: 'shelter' };
+          render();
+          proceedEndSol();
+        },
+        onSecondary: () => {
+          proceedEndSol();
+        },
+      });
+      return;
+    }
+
+    // 2. Power Shortage Warning: Night power deficit will cut heaters or air
+    const d = demandFor(plan, env);
+    const available = s!.state.batteryKWh + env.generationKWh;
+    if (available < d.heaters + d.air) {
+      confirmDecision({
+        title: t('decision.title'),
+        desc: t('decision.power.crit'),
+        iconName: 'power',
+        primaryText: t('decision.rebalance'),
+        secondaryText: t('decision.proceed'),
+        onPrimary: () => {
+          // Stay on current sol to allow cadet to adjust allocation
+        },
+        onSecondary: () => {
+          proceedEndSol();
+        },
+      });
+      return;
+    }
+
+    proceedEndSol();
   }
 
   function render(): void {
@@ -232,6 +323,7 @@ registerScreen('sol', (app) => {
           h('li', {}, h('kbd', {}, '2'), h('span', {}, t('shortcuts.sys2'))),
           h('li', {}, h('kbd', {}, '3'), h('span', {}, t('shortcuts.sys3'))),
           h('li', {}, h('kbd', {}, '4'), h('span', {}, t('shortcuts.sys4'))),
+          h('li', {}, h('kbd', {}, 'B'), h('span', {}, t('title.briefing'))),
           h('li', {}, h('kbd', {}, '?'), h('span', {}, t('shortcuts.help'))),
         ),
         h('button', { class: 'btn primary block', style: 'margin-top: 20px;', type: 'button', onclick: () => { sfx.click(); dlg.close(); dlg.remove(); } }, t('close')),
@@ -365,6 +457,9 @@ registerScreen('sol', (app) => {
       s!.draft = { ...plan, crew: nextCrew[plan.crew] };
       sfx.step();
       render();
+    } else if (e.key === 'b' || e.key === 'B') {
+      e.preventDefault();
+      openBriefing();
     } else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
       e.preventDefault();
       const btn = root.querySelector<HTMLButtonElement>('.shortcuts-hint');

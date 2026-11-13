@@ -5,6 +5,7 @@ import { shippedBadge } from '../../data/load';
 import { sfx } from '../../game/audio';
 import { encodeMission } from '../../game/codes';
 import { helpFor, Session, type PlayedSol } from '../../game/session';
+import { store } from '../../game/storage';
 import { registerScreen } from '../app';
 import { h, prefersReducedMotion } from '../dom';
 import { fmt, fmtNum, getLang, t } from '../i18n';
@@ -217,6 +218,11 @@ registerScreen('review', (app) => {
   const totalEvas = s.reports.filter((r) => r.plan?.crew === 'eva').length;
   const totalSciEarned = s.reports.reduce((a, r) => a + r.scienceGained, 0);
 
+  let cadetName = store.get<string>('cadet_name', '');
+  const certProse = h('p', { class: 'cert-prose' },
+    cadetName ? t('cert.certified.name', { name: cadetName }) : t('cert.certified'),
+  );
+
   app.provenance = () => [
     { source_id: 'donki-enlil', badge: shippedBadge(s.window.mode), detail: s.window.marsForecasts.map((f) => f.simulationID).join(', '), retrieved: s.window.retrieved, url: s.window.url_enlil },
     ...(fact ? [{ source_id: fact.source_id, badge: 'cache' as const }] : []),
@@ -251,9 +257,25 @@ registerScreen('review', (app) => {
     missionTimeline(s.reports, s.env),
     !won ? h('section', { class: 'card why' }, h('div', { class: 'card-head' }, icon('alert'), h('h2', {}, t('review.why'))), h('p', {}, t(`why.${st.failure}`))) : null,
     fact ? h('section', { class: 'card fact' }, h('div', { class: 'card-head' }, icon('science'), h('h2', {}, t('review.learn'))), h('p', {}, factText(fact))) : null,
+    won ? h('div', { class: 'card cert-name-card' },
+      h('div', { class: 'card-head' }, icon('rank'), h('h2', {}, t('cert.name.label'))),
+      h('input', {
+        id: 'cert-name-input',
+        class: 'code-input',
+        type: 'text',
+        placeholder: t('cert.name.placeholder'),
+        value: cadetName,
+        maxlength: 30,
+        oninput: (e: Event) => {
+          cadetName = (e.target as HTMLInputElement).value.trim();
+          store.set('cadet_name', cadetName);
+          certProse.textContent = cadetName ? t('cert.certified.name', { name: cadetName }) : t('cert.certified');
+        },
+      }),
+    ) : null,
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn primary lg block', type: 'button', onclick: retry }, icon('refresh', 'sm'), t('review.retry')),
-      h('button', { class: 'btn block', type: 'button', onclick: () => window.print() }, icon('rank', 'sm'), t('review.print')),
+      won ? h('button', { class: 'btn block', type: 'button', onclick: () => window.print() }, icon('rank', 'sm'), t('review.print')) : null,
       h('button', { class: 'btn block', type: 'button', onclick: () => app.go('setup') }, icon('pin', 'sm'), t('review.new')),
       h('button', { class: 'btn ghost block', type: 'button', onclick: () => { app.session = null; app.go('title'); } }, icon('home', 'sm'), t('review.home')),
     ),
@@ -269,6 +291,7 @@ registerScreen('review', (app) => {
         miniChart({ label: t('hud.dose'), ico: 'radiation', color: 'var(--c-dose)', max: budget * 1.1, you: seriesOf(youStates, (x) => x.doseMSv), ghost: seriesOf(ghostStates, (x) => x.doseMSv), limit: budget }, sols),
       ),
       h('p', { class: 'ghost-note' }, icon('info', 'sm'), h('span', {}, ghost.final.status === 'won' ? t('review.ghost.won', { sci: fmtNum(ghost.final.scienceSent) }) : t('review.ghost.failed'))),
+      h('p', { class: 'ghost-explain', style: 'margin-top: 6px; font-size: 0.8rem; color: var(--text-2);' }, icon('radio', 'sm'), ' ', t('review.ghost.explain')),
       h('p', { class: 'visually-hidden' }, t('review.chart')),
     ),
     h('section', { class: 'card' },
@@ -291,7 +314,7 @@ registerScreen('review', (app) => {
         h('p', { class: 'cert-sub' }, t('cert.subtitle')),
       ),
       h('div', { class: 'cert-body' },
-        h('p', { class: 'cert-prose' }, t('cert.certified')),
+        certProse,
         h('div', { class: 'cert-grid' },
           h('div', { class: 'cert-stat' }, h('span', { class: 'k' }, t('stat.sols')), h('strong', { class: 'v' }, `${fmtNum(st.sol)} / ${fmtNum(sols)}`)),
           h('div', { class: 'cert-stat' }, h('span', { class: 'k' }, t('stat.science')), h('strong', { class: 'v' }, `${fmtNum(st.scienceSent)} / ${fmtNum(v('SCIENCE_GOAL'))}`)),

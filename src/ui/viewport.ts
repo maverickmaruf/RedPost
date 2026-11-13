@@ -2,6 +2,7 @@
 // Renders an animated SVG diorama of the Martian habitat that visually reacts
 // to real NASA space weather, solar radiation, temperature, and cadet command decisions.
 
+import { v } from '../compute/constants';
 import type { SolEnv } from '../compute/mission';
 import type { Plan } from '../compute/outpost';
 import { sfx } from '../game/audio';
@@ -474,7 +475,7 @@ export function renderOutpostViewport(props: ViewportProps): HTMLElement {
       s('circle', { cx: 13, cy: 4.5, r: 1, fill: '#fff' }), // glint
       // Science Gain Floating Chip
       s('rect', { x: -8, y: -16, width: 44, height: 14, rx: 7, fill: 'rgba(10, 14, 23, 0.85)', stroke: '#3ddc97', 'stroke-width': 1 }),
-      s('text', { x: 14, y: -6, fill: '#3ddc97', 'font-size': '8px', 'font-family': 'monospace', 'text-anchor': 'middle', 'font-weight': 'bold' }, '+15 SCI'),
+      s('text', { x: 14, y: -6, fill: '#3ddc97', 'font-size': '8px', 'font-family': 'monospace', 'text-anchor': 'middle', 'font-weight': 'bold' }, `+${v('EVA_SCIENCE')} SCI`),
     );
   } else {
     // Small astronaut marker at hab entrance
