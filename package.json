@@ -16,6 +16,7 @@
     "acquire": "node scripts/acquire/index.mjs",
     "acquire:offline": "node scripts/acquire/index.mjs --offline",
     "capture:screenshots": "npm run build && node scripts/capture-screenshots.mjs",
+    "deploy": "node scripts/deploy-gh-pages.mjs",
     "e2e": "npm run build && playwright test"
   },
   "devDependencies": {
