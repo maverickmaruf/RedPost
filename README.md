@@ -2,7 +2,7 @@
 
 **NASA Space Apps Challenge 2026 · Challenge: [Junior Astronaut Mission Trainer](https://www.spaceappschallenge.org/2026/challenges/junior-astronaut-mission-trainer/)**  
 *(Track: Living Beyond Earth / Space Exploration Systems & Gamified Education · Intermediate / Beginner-Youth)*  
-**Live Interactive Application:** [https://maverickmaruf.github.io/redpost/](https://github.com/maverickmaruf/redpost.git)  
+**Live Interactive Application:** [https://maverickmaruf.github.io/RedPost/](https://maverickmaruf.github.io/RedPost/)  
 
 > *"Picture this: it's Sol 214 on a lunar outpost, a dust storm just rolled in, your solar panels are about to get buried, and you have about 10 seconds to decide: do you retract the panels and lose power tonight, or leave the exposed panels and risk losing a lot more? That single decision is the entire spirit of this challenge. Your challenge is to design and build an interactive game or app where kids ages 7 to 12 run a lunar or Martian outpost, making real decisions about life support, radiation shielding, power budgeting, food production, and communication delay, and then watching those consequences play out. Not a quiz. Not a slideshow. A living simulation where every choice costs something... putting someone in the commander's seat and making them own their consequences."*  
 > — **Mike Givens**, Challenge Author (NASA / Kakhi International)
