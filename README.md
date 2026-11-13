@@ -33,15 +33,16 @@ For competition judges and evaluators who want to inspect the record-breaking Ma
 
 ## Table of Contents
 1. [Challenge Overview & Vision](#challenge-overview--vision)
-2. [The Five Core Survival Pillars](#the-five-core-survival-pillars)
-3. [Key Gameplay Innovations](#key-gameplay-innovations)
-4. [Scientific & Mathematical Models (`src/compute/`)](#scientific--mathematical-models-srccompute)
-5. [Codebase Architecture & File Guide](#codebase-architecture--file-guide)
-6. [NASA & Partner Space Agency Data](#nasa--partner-space-agency-data)
-7. [Bilingual Engine (English & বাংলা)](#bilingual-engine-english--বাংলা)
-8. [Offline-First PWA & Privacy](#offline-first-pwa--privacy)
-9. [Development & Verification Commands](#development--verification-commands)
-10. [License & Credits](#license--credits)
+2. [Architectural Overview & Core Design Principles](#architectural-overview--core-design-principles)
+3. [The Five Core Survival Pillars](#the-five-core-survival-pillars)
+4. [Key Gameplay Innovations](#key-gameplay-innovations)
+5. [Scientific & Mathematical Models (`src/compute/`)](#scientific--mathematical-models-srccompute)
+6. [Codebase Architecture & File Guide](#codebase-architecture--file-guide)
+7. [NASA & Partner Space Agency Data](#nasa--partner-space-agency-data)
+8. [Bilingual Engine (English & বাংলা)](#bilingual-engine-english--বাংলা)
+9. [Offline-First PWA & Privacy](#offline-first-pwa--privacy)
+10. [Development & Verification Commands](#development--verification-commands)
+11. [License & Credits](#license--credits)
 
 ---
 
@@ -52,6 +53,40 @@ In deep space, there is **no unlimited resource mode**. Every decision is a zero
 - **Science vs. Radiation:** Sending astronauts outside on EVA spacewalks gathers essential geological data for Earth, but burns suit energy and exposes the crew to cosmic radiation and solar particle events.
 - **Storm Shelters vs. Agriculture:** Taking refuge in the water-walled storm bunker blocks $75\%$ of solar storm radiation, but leaves the hydroponic greenhouse half-tended.
 - **Communication vs. Autonomy:** The deep-space radio antenna consumes power to transmit science data and receive NASA DONKI storm alerts, but orbital light-time ($3\text{--}22\text{ min}$) means Earth can never intervene in an emergency.
+
+---
+
+## Architectural Overview & Core Design Principles
+
+The application is structured into strict, decoupled layers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       src/ui/ (DOM)                         │
+│  Reactive views, SVG Diorama, Telemetry Gauges, Modals      │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Dispatches Plans & Triggers
+┌──────────────────────────────▼──────────────────────────────┐
+│                      src/game/ (State)                      │
+│  Session, Saves, Heuristic Solver, Procedural Audio, Codes  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Pure Functional Calls
+┌──────────────────────────────▼──────────────────────────────┐
+│                    src/compute/ (Physics)                   │
+│  Mars24 Orbit, JPL Ephemeris, MOLA Slopes, Outpost Steps    │
+│  (STRICT: No DOM, No Window, No Network, Zero Randomness)   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Rules:
+1. **Strict Separation of Compute (`src/compute/`):**  
+   The mathematical core has zero dependencies on DOM APIs, browser clocks (`Date.now()`), network calls (`fetch`), or non-deterministic randomness (`Math.random()`). All math is purely deterministic and fully unit-tested with Vitest. An automated ESLint boundary rule prevents any DOM or browser imports from entering `src/compute/`.
+2. **Deterministic Save-by-Replay Engine (`src/game/session.ts`):**  
+   Game saves do not serialize large, fragile state objects. Instead, saves store only the initial mission setup and the sequence of player decisions `Plan[]`. The entire 30-sol state is reconstructed deterministically by replaying decisions through the compute core, preventing state corruption across updates.
+3. **Pre-Compiled Zero-Network Pipeline (`scripts/acquire/`):**  
+   All NASA data (MOLA MEGDR topography grids, InSight weather telemetry, DONKI WSA-ENLIL heliospheric simulations) is acquired and verified at build time and bundled directly into static JSON fixtures. At runtime, the client makes zero HTTP network requests.
+4. **Accessible, Ultra-Lightweight DOM (`src/ui/dom.ts`):**  
+   All DOM elements are constructed using a lightweight typed hyperscript helper `h()`. No heavy frontend framework (React, Vue, or Angular) is used, keeping the bundle size minuscule (~157 kB uncompressed, ~51 kB gzipped) with near-instant load times on low-end hardware.
 
 ---
 
