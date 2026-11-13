@@ -31,7 +31,39 @@ For competition judges and evaluators who want to inspect the record-breaking Ma
 
 ---
 
+## 📸 Visual Showcase & Interactive Walkthrough
+
+The following screenshots illustrate the core interactive experience of **Red Outpost**, designed to put young explorers directly in the Commander's seat with authentic NASA telemetry, tactile Martian dioramas, and high-stakes survival trade-offs:
+
+| 01. Title Screen & Mission Control Deck | 02. Junior Astronaut Flight Briefing |
+|:---:|:---:|
+| [![Title Screen](docs/screenshots/01_title_screen.png)](docs/screenshots/01_title_screen.png) | [![Flight Briefing](docs/screenshots/02_briefing_deck.png)](docs/screenshots/02_briefing_deck.png) |
+| *Landing page with isometric habitat art, astronaut rank badge, and live telemetry highlights.* | *Interactive onboarding slide deck teaching power constraints, life support, and CME shielding.* |
+
+| 03. MOLA Landing Site Radar & Slope Map | 04. Deep Space Telemetry & Planetary Relay |
+|:---:|:---:|
+| [![Mission Setup](docs/screenshots/03_mission_setup.png)](docs/screenshots/03_mission_setup.png) | [![Earth-Mars Relay](docs/screenshots/04_earth_mars_relay.png)](docs/screenshots/04_earth_mars_relay.png) |
+| *NASA MOLA laser-altimeter shaded relief map with interactive slope clearance crosshairs.* | *Real-time astronomical model displaying interplanetary distance (AU) and light-time delay.* |
+
+| 05. Sol Command Center & Living Viewport | 06. Commander's Critical Decision Gate |
+|:---:|:---:|
+| [![Sol Command](docs/screenshots/05_sol_command.png)](docs/screenshots/05_sol_command.png) | [![Critical Decision](docs/screenshots/06_critical_decision.png)](docs/screenshots/06_critical_decision.png) |
+| *Interactive SVG habitat diorama, 4 resource gauges, power budget stack, and DONKI alert card.* | *High-stakes emergency choice: order crew into bunker shelter or risk EVA radiation for science.* |
+
+| 07. Flight Director's Mission Review | 08. Official Printable Flight Certificate |
+|:---:|:---:|
+| [![Mission Review](docs/screenshots/07_review_charts.png)](docs/screenshots/07_review_charts.png) | [![Printable Certificate](docs/screenshots/08_flight_certificate.png)](docs/screenshots/08_flight_certificate.png) |
+| *4 comparative mini-charts vs NASA Ghost reference solver, event timeline, and particle confetti.* | *Printable NASA Space Apps Junior Astronaut flight diploma with custom cadet name & mission seal.* |
+
+| 09. Touch-Optimized Mobile Viewport (iPhone / Android) |
+|:---:|
+| [![Mobile Viewport](docs/screenshots/09_mobile_command.png)](docs/screenshots/09_mobile_command.png) |
+| *Full responsive layout delivering the complete 5-pillar simulation on budget mobile devices.* |
+
+---
+
 ## Table of Contents
+- [📸 Visual Showcase & Interactive Walkthrough](#-visual-showcase--interactive-walkthrough)
 1. [Executive Summary & Challenge Philosophy](#1-executive-summary--challenge-philosophy)
 2. [Architectural Overview & Core Design Principles](#2-architectural-overview--core-design-principles)
 3. [The Five Core Pillars of Deep-Space Survival](#3-the-five-core-pillars-of-deep-space-survival)
@@ -60,6 +92,7 @@ For competition judges and evaluators who want to inspect the record-breaking Ma
    - [6.6 Junior Astronaut Flight Briefing Deck (`briefing.ts`)](#66-junior-astronaut-flight-briefing-deck-briefingts)
    - [6.7 Flight Director's Review & Printable Certificate (`review.ts`)](#67-flight-directors-review--printable-certificate-reviewts)
    - [6.8 Scientific Provenance & About Console (`about.ts`, `provenance.ts`)](#68-scientific-provenance--about-console-aboutts-provenancets)
+   - [6.9 Mobile Responsive Interface](#69-mobile-responsive-interface)
 7. [Complete File-by-File Codebase Directory](#7-complete-file-by-file-codebase-directory)
 8. [NASA Data Pipeline & Provenance System](#8-nasa-data-pipeline--provenance-system)
 9. [Bilingual System & Internationalization (`i18n.ts`)](#9-bilingual-system--internationalization-i18nts)
@@ -107,6 +140,39 @@ The application is structured into strict, decoupled layers:
 │  Mars24 Orbit, JPL Ephemeris, MOLA Slopes, Outpost Steps    │
 │  (STRICT: No DOM, No Window, No Network, Zero Randomness)   │
 └─────────────────────────────────────────────────────────────┘
+```
+
+```mermaid
+flowchart TD
+  subgraph UI["Layer 1: src/ui (Presentation & Interactive Viewport)"]
+    DOM["DOM Tree & Hyperscript h()"]
+    Diorama["SVG Outpost Living Diorama (viewport.ts)"]
+    Radar["MOLA Radar Canvas (setup.ts)"]
+    HUD["Resource Gauges & Power Stack (sol.ts)"]
+    Modals["Briefing Deck & Critical Decision Dialogs"]
+    ReviewUI["Mini-Charts, Timeline & Certificate (review.ts)"]
+  end
+
+  subgraph Game["Layer 2: src/game (State & Coordination)"]
+    SessionMgr["Session Coordinator (session.ts)"]
+    Ghost["Flight Director Heuristic Solver (planner.ts)"]
+    AudioSynth["Procedural Web Audio Engine (audio.ts)"]
+    Codecs["Base32 Mission Code Serialization (codes.ts)"]
+    Storage["LocalStorage & Adaptive Drop (storage.ts)"]
+  end
+
+  subgraph Core["Layer 3: src/compute (Deterministic Physics Core)"]
+    Mars24["Mars24 Orbital Geometry & Solar Flux (astro.ts)"]
+    JPL["JPL Planetary Ephemeris & Light-Time (astro.ts)"]
+    MOLA["MOLA Slope Physics & Hazard Matrix (terrain.ts)"]
+    PowerDispatch["Priority Power Dispatch Engine (outpost.ts)"]
+    MissionGen["Mission Scenario Synthesizer (mission.ts)"]
+  end
+
+  UI -- "Dispatches Player Plan (Air, Heaters, Radio, Crew)" --> Game
+  Game -- "Deterministic Sol Simulation Step" --> Core
+  Core -- "Immutable OutpostState & SolReport" --> Game
+  Game -- "Reactive State Updates & Procedural Audio" --> UI
 ```
 
 ### Key Architectural Rules:
@@ -199,13 +265,32 @@ Uses high-resolution digital elevation models from the Mars Orbiter Laser Altime
 - Enforces NASA landing safety criteria: any pixel with slope $\theta > 15^\circ$ is flagged as hazardous/unlandable.
 
 ### 4.4 Outpost State Machine & Priority Power Dispatch (`outpost.ts`)
-Each sol, power is allocated sequentially through a priority queue:
-$$\text{Priority: } [1.\text{ Heaters} \rightarrow 2.\text{ Air (MOXIE)} \rightarrow 3.\text{ Crew Duty} \rightarrow 4.\text{ Deep-Space Radio} \rightarrow 5.\text{ Greenhouse}]$$
+Each sol, power is allocated sequentially through a deterministic priority queue:
+$$\text{Priority: } [1.\text{ Heaters} \rightarrow 2.\text{ Air (MOXIE)} \rightarrow 3.\text{ Greenhouse} \rightarrow 4.\text{ Deep-Space Radio} \rightarrow 5.\text{ Crew Duty}]$$
+
+```mermaid
+flowchart TD
+  P0["Available Energy: Battery Reserves + Solar PV Generation"] --> P1{"Priority 1: Life-Support Heaters"}
+  P1 -- Sufficient Energy --> P2{"Priority 2: MOXIE Oxygen Plant"}
+  P1 -- Deficit --> F1["FATAL FREEZEOUT: Habitat temperature collapses to -95°C (Blackout Failure)"]
+  
+  P2 -- Sufficient Energy --> P3{"Priority 3: Hydroponic Greenhouse"}
+  P2 -- Deficit --> F2["SUFFOCATION HAZARD: O2 generation halted, tank reserves deplete"]
+  
+  P3 -- Sufficient Energy --> P4{"Priority 4: Deep-Space Radio Relay"}
+  P3 -- Deficit --> W1["CROP WILT: Harvest delayed, partial food growth penalty"]
+  
+  P4 -- Sufficient Energy --> P5{"Priority 5: Crew Activity (EVA / Lab)"}
+  P4 -- Deficit --> W2["COMM BLACKOUT: Space weather warnings & telemetry missed"]
+  
+  P5 -- Sufficient Energy --> P6["SURPLUS POWER: Recharges 60 kWh Habitat Battery"]
+  P5 -- Deficit --> W3["RESEARCH IDLE: Field exploration halted to conserve battery"]
+```
 
 If total demand exceeds available energy ($E_{avail} = E_{battery} + E_{solar}$), lower-priority systems are shed automatically:
-1. `greenhouse` shuts off ($0\text{ kg}$ food grown).
+1. `crew` activity defaults to idle inside the habitat ($0\text{ kWh}$).
 2. `radio` shuts off (science transmission halts, warnings queued).
-3. `crew` activity defaults to idle inside the habitat.
+3. `greenhouse` shuts off ($0\text{ kg}$ food grown).
 4. `air` shuts off (habitat begins drawing from tank reserves).
 5. If `heaters` cannot be powered, the habitat freezes, causing an immediate **Blackout Failure**.
 
@@ -262,6 +347,8 @@ Implements an audio engine using the browser's native Web Audio API (`AudioConte
 ## 6. User Interface & Interactive Diorama (`src/ui/`)
 
 ### 6.1 Living Outpost Viewport (`viewport.ts`)
+[![Living Outpost Viewport](docs/screenshots/05_sol_command.png)](docs/screenshots/05_sol_command.png)
+
 A dynamic $720 \times 300$ SVG diorama rendering the Martian outpost in real time:
 - **Atmospheric Sky Engine:** Sky gradient shifts dynamically based on environment: deep cosmic indigo on clear nights, dusty ochre during dust storms, and pulsing crimson/violet auroral curtains during solar CMEs.
 - **Orbital Bodies:** Realistic distant Sun ($44\%$ apparent size) and the potato-shaped Martian moon Phobos traversing the sky.
@@ -274,6 +361,8 @@ A dynamic $720 \times 300$ SVG diorama rendering the Martian outpost in real tim
   - *Sub-Surface Storm Bunker:* Displays active purple water-wall shielding when the crew is ordered to take cover.
 
 ### 6.2 Earth-Mars Telemetry Relay Diagram (`relay.ts`)
+[![Earth-Mars Telemetry Relay](docs/screenshots/04_earth_mars_relay.png)](docs/screenshots/04_earth_mars_relay.png)
+
 A dynamic astronomical visualization showing:
 - Orbits of Earth and Mars around the Sun.
 - Pulsing radio link displaying instantaneous distance in AU and one-way light time.
@@ -281,6 +370,8 @@ A dynamic astronomical visualization showing:
   $$\text{NASA DONKI CME } (800\text{--}1400\text{ km/s}) \quad \text{vs} \quad \text{Radio Signals } (300,000\text{ km/s})$$
 
 ### 6.3 Title Screen & Commander's Highlights (`title.ts`)
+[![Title Screen](docs/screenshots/01_title_screen.png)](docs/screenshots/01_title_screen.png)
+
 - **Wordmark & Mars Habitat Art:** Hero illustration with hidden Judge Mode (tap 5 times to jump straight to Sol 12 of the May 2024 record storm).
 - **Flight Operations Highlights Bar:** Dedicated quick-dock featuring:
   - `InSight Weather Data`
@@ -291,6 +382,8 @@ A dynamic astronomical visualization showing:
 - **Navigation Console:** Quick Start (direct to October 2026), Site Selection, Commander's Briefing, Daily Flight, About Console, Mission Code entry, and Astronaut Rank badge (Cadet $\rightarrow$ Mission Specialist $\rightarrow$ Flight Engineer $\rightarrow$ Commander).
 
 ### 6.4 Mission Setup & Radar Targeting (`setup.ts`)
+[![Mission Setup & MOLA Radar](docs/screenshots/03_mission_setup.png)](docs/screenshots/03_mission_setup.png)
+
 - **Interactive Topographic Altimeter:** Displays 2D shaded relief with slope coloring generated from NASA MOLA MEGDR laser data.
 - **Targeting Crosshairs:** Clicking/tapping checks ground slope, displaying elevation and landing clearance (green if $\le 15^\circ$, red hazard hatching if $> 15^\circ$).
 - **Crater Selection:**
@@ -308,6 +401,8 @@ A dynamic astronomical visualization showing:
   - September 2035 (`FUTURE` Human Surface Expedition)
 
 ### 6.5 Sol Command Center & Critical Decision Gates (`sol.ts`)
+[![Commander's Critical Decision Modal](docs/screenshots/06_critical_decision.png)](docs/screenshots/06_critical_decision.png)
+
 - **Resource Telemetry HUD:** 4 animated gauges with dynamic fill bars and flashing "LOW" indicators (Power kWh, Oxygen kg, Food kg, Radiation Dose mSv).
 - **Interactive Power Budget Stack:** Real-time stacked bar chart breaking down consumption by subsystem against battery capacity, warning if demand causes load shedding.
 - **Space Weather Forecast Card:** Real DONKI alerts with radiation hazard levels and light-time transmission metadata.
@@ -318,6 +413,8 @@ A dynamic astronomical visualization showing:
 - **Keyboard Shortcuts:** `[Space]` End Sol, `[1]` Air, `[2]` Greenhouse, `[3]` Radio, `[4]` Crew, `[B]` Briefing, `[?]` Shortcuts Help.
 
 ### 6.6 Junior Astronaut Flight Briefing Deck (`briefing.ts`)
+[![Junior Astronaut Flight Briefing Deck](docs/screenshots/02_briefing_deck.png)](docs/screenshots/02_briefing_deck.png)
+
 An illustrated 4-card onboarding slide deck for cadets:
 - Card 1: Power & Life Support ($-90^\circ\text{C}$ night heaters, MOXIE, greenhouse).
 - Card 2: Light-Speed Communication Delay ($1.5\text{ AU}$ distance, $3\text{--}22\text{ min}$ delay).
@@ -325,16 +422,27 @@ An illustrated 4-card onboarding slide deck for cadets:
 - Card 4: Science vs. Survival (No unlimited resources, commander's trade-offs).
 
 ### 6.7 Flight Director's Review & Printable Certificate (`review.ts`)
+[![Flight Director's Review Mini-Charts](docs/screenshots/07_review_charts.png)](docs/screenshots/07_review_charts.png)
+
+[![Official Printable Flight Certificate](docs/screenshots/08_flight_certificate.png)](docs/screenshots/08_flight_certificate.png)
+
 - **Celebration Particle Engine:** 120-frame physics canvas emitting multi-colored star confetti on victory, or falling embers on failure. Respects `prefers-reduced-motion`.
 - **Flight Director Ghost Charts:** 4 side-by-side time-series graphs (Power, Oxygen, Food, Dose) comparing the cadet's actual decisions (solid line) against NASA Flight Director's reference strategy (dashed line).
 - **Mission Event Timeline SVG:** Visual progression plotting CME storm impacts, warnings received, and science milestones.
-- **Printable Junior Astronaut Certificate:** When a mission is completed, cadets can enter their name (`Cadet Alex`). Clicking "Print Certificate" uses `@media print` styles to output an official, framed NASA Space Apps Challenge flight diploma complete with mission stats, star rating, seal, and Flight Director signature line.
+- **Printable Junior Astronaut Certificate:** When a mission is completed, cadets can enter their name (`CADET MARUF (COMMANDER)`). Clicking "Print Certificate" uses `@media print` styles to output an official, framed NASA Space Apps Challenge flight diploma complete with mission stats, star rating, seal, and Flight Director signature line.
 - **Debrief Clipboard Sharing:** Formats mission outcomes into a compact, emoji-annotated text summary for social sharing.
 
 ### 6.8 Scientific Provenance & About Console (`about.ts`, `provenance.ts`)
 - **Data Provenance Drawer:** Accessible from any screen; details dataset name, publisher, record ID, citation URL, and verification status (`cache`, `archived`, `simulated`, `computed`).
 - **Constants Matrix:** Tabulates all 33 physical constants, their values, units, and cited NASA literature.
 - **Educational Fact Bank:** 14 verified bilingual space science facts linked to their primary sources.
+
+### 6.9 Mobile Responsive Interface
+[![Mobile Responsive Viewport](docs/screenshots/09_mobile_command.png)](docs/screenshots/09_mobile_command.png)
+
+- **Responsive Viewport Scaling:** Seamlessly adapts to portrait smartphones ($390 \times 844$) without horizontal scroll or truncated text.
+- **Touch Ergonomics:** Generous touch targets ($\ge 44 \times 44\text{ px}$ conforming to WCAG 2.1 Target Size criteria) for young astronauts using tablets or mobile phones.
+- **Full Feature Parity:** 100% of simulator capabilities—including the living diorama, MOLA slope scanner, power budget stack, and particle celebration—operate smoothly on mobile hardware with zero performance degradation.
 
 ---
 
