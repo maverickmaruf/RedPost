@@ -104,3 +104,4 @@ export function openBriefing(onStart?: () => void): void {
   renderSlide();
   dlg.showModal();
 }
+
