@@ -530,3 +530,4 @@ To rapidly inspect game scenarios without playing through 12 sols:
 
 **Built with pride for the NASA Space Apps Challenge 2026.**  
 *Dedicated to inspiring the next generation of deep space commanders.*
+
